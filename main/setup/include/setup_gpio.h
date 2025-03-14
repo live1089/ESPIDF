@@ -3,7 +3,7 @@
 
 #include "driver/gpio.h"
 
-
+#define LCD_SPI_NUM         (SPI2_HOST)
 //lcd pin set
 #define LCD_BLK_NUM     GPIO_NUM_17
 #define LCD_SCLK_NUM    GPIO_NUM_18
@@ -18,6 +18,8 @@
 #define TOUCH_SPI_MISO       (GPIO_NUM_19)
 #define TOUCH_GPIO_MOSI      (GPIO_NUM_23)
 #define TOUCH_GPIO_CS        (GPIO_NUM_5)
+#define TOUCH_GPIO_IRQ       (GPIO_NUM_21)
+
 
 
 void setup_gpio_init(void);

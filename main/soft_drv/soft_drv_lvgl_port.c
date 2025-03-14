@@ -3,6 +3,7 @@
 #include "setup_spi.h"
 #include "device_lcd.h"
 #include "esp_lvgl_port.h"
+#include "esp_log.h"
 
 #define LCD_DRAW_BUFF_HEIGHT (40)     // 绘图缓冲区高度（行数）
 #define LCD_BL_NO_LEVEL (1)           // 背光引脚电平（1 = 开启）
@@ -12,6 +13,8 @@
 
 
 static lv_display_t *lvgl_disp = NULL;// LVGL 显示设备句柄
+/* LVGL touch */
+static lv_indev_t *lvgl_touch_indev = NULL;
 
 void soft_drv_lvgl_port_init(void)
 {
@@ -50,8 +53,23 @@ lvgl_port_display_cfg_t disp_cfg = {
     }
 };
 lvgl_disp = lvgl_port_add_disp(&disp_cfg); // 添加显示设备到 LVGL
+
+
+    /* Add touch input (for selected screen) */
+    const lvgl_port_touch_cfg_t touch_cfg = {
+        .disp = lvgl_disp,
+        .handle = tp_io_handle
+    };
+    lvgl_touch_indev = lvgl_port_add_touch(&touch_cfg);
 }
 
+void lvgl_deinit(void)
+{
+    lvgl_port_remove_touch(lvgl_touch_indev);
+    gpio_uninstall_isr_service();
+    lvgl_port_remove_disp(lvgl_disp);
+    lvgl_port_deinit();
+}
 
 
 

@@ -8,13 +8,19 @@
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lvgl_port.h"
+#include "esp_lcd_touch_xpt2046.h"
+#include "esp_lcd_touch.h"
+
+
+
 
 extern esp_lcd_panel_io_handle_t   lcd_io_handle;
 extern esp_lcd_panel_handle_t      lcd_panel_handle;
-
-
+extern esp_lcd_touch_handle_t      lcd_touch_handle;
+extern esp_lcd_panel_io_handle_t   tp_io_handle;
 
 void device_lcd_init(void);
-
+void lcd_deinit(void);
+void lcd_touch_init(void);
 
 #endif

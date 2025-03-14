@@ -1,6 +1,5 @@
 #include "device_lcd.h"
-
-
+#include "lvgl.h"
 /*
 esp_lcd_panel_reset()
 硬件/软件复位屏幕
@@ -26,15 +25,17 @@ esp_lcd_panel_disp_on_off()
 */
 
 
-esp_lcd_panel_io_handle_t lcd_io_handle;
-esp_lcd_panel_handle_t lcd_panel_handle;
+esp_lcd_panel_io_handle_t lcd_io_handle = NULL;
+esp_lcd_panel_handle_t lcd_panel_handle = NULL;
+esp_lcd_touch_handle_t lcd_touch_handle = NULL;
+esp_lcd_panel_io_handle_t tp_io_handle = NULL;
 
 
 // 定义 SPI 传输完成回调函数
-static bool spi_trans_done_callback(esp_lcd_panel_io_handle_t io, esp_lcd_panel_io_event_data_t *edata, void *ctx) {
+// static bool spi_trans_done_callback(esp_lcd_panel_io_handle_t io, esp_lcd_panel_io_event_data_t *edata, void *ctx) {
 
-    return true;
-}
+//     return true;
+// }
 
 
 void device_lcd_init(void)
@@ -42,17 +43,17 @@ void device_lcd_init(void)
      const spi_bus_config_t buscfg = ILI9341_PANEL_BUS_SPI_CONFIG(LCD_SCLK_NUM,
                                                                 LCD_MOSI_NUM,
                                                                 LCD_H_RES_DATA * LCD_BUFFER_H_DATA * sizeof(uint16_t));//配置SPI引脚
-    ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO));// 安装SPI驱动
+    ESP_ERROR_CHECK(spi_bus_initialize(LCD_SPI_NUM, &buscfg, SPI_DMA_CH_AUTO));// 安装SPI驱动
 
 
     //设置其余GPIO口
     const esp_lcd_panel_io_spi_config_t io_config = 
             ILI9341_PANEL_IO_SPI_CONFIG(LCD_CS_NUM,
                                         LCD_DC_NUM,
-                                        spi_trans_done_callback,
+                                        NULL,
                                         NULL);
     ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(  
-        (esp_lcd_spi_bus_handle_t)SPI2_HOST, 
+        (esp_lcd_spi_bus_handle_t)LCD_SPI_NUM, 
                                 &io_config, 
                                 &lcd_io_handle));
 
@@ -67,16 +68,12 @@ void device_lcd_init(void)
     ESP_ERROR_CHECK(esp_lcd_new_panel_ili9341(lcd_io_handle, &panel_config, &lcd_panel_handle));
 
 
-
-        // 手动复位屏幕
-    gpio_set_level(LCD_RST_NUM, 0);
-    vTaskDelay(pdMS_TO_TICKS(100));
-    gpio_set_level(LCD_RST_NUM, 1);
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-
+     esp_lcd_panel_reset(lcd_panel_handle);
      // 4. 初始化面板
     ESP_ERROR_CHECK(esp_lcd_panel_init(lcd_panel_handle));
+
+    /* LCD backlight on */
+    ESP_ERROR_CHECK(gpio_set_level(LCD_BLK_NUM, 1));
     
     // 6. 设置显示偏移（根据屏幕安装位置调整）
     ESP_ERROR_CHECK(esp_lcd_panel_set_gap(lcd_panel_handle, 0, 0)); // 常见偏移设置
@@ -88,8 +85,48 @@ void device_lcd_init(void)
 }
 
 
+void lcd_deinit(void)
+{
+    esp_lcd_panel_del(lcd_panel_handle);
+    esp_lcd_panel_io_del(lcd_io_handle);
+    spi_bus_free(LCD_SPI_NUM);
+    gpio_reset_pin(LCD_BLK_NUM);
+}
 
 
+void lcd_touch_init(void)
+{
+    /* Initialize touch HW */
+    const esp_lcd_touch_config_t tp_cfg = {
+        .x_max = 320,          // 屏幕宽度（根据实际修改）
+        .y_max = 240,          // 屏幕高度
+        .rst_gpio_num = -1,    // 若未使用复位引脚设为 -1
+        .int_gpio_num = -1,    // 中断引脚
+        .levels = {
+            .reset = 0,
+            .interrupt = 0,
+        },
+        .flags = {
+            .swap_xy = 0,
+            .mirror_x = 0,
+            .mirror_y = 1,
+        },
+    };
+
+    /* XPT2046 初始化配置 */
+ esp_lcd_panel_io_spi_config_t tp_io_config = 
+            ESP_LCD_TOUCH_IO_SPI_XPT2046_CONFIG(TOUCH_GPIO_CS);
+
+ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_SPI_NUM, &tp_io_config, &tp_io_handle));
+
+/*初始化触摸控制器*/
+ESP_ERROR_CHECK(esp_lcd_touch_new_spi_xpt2046(
+    tp_io_handle,      
+    &(tp_cfg),   // 配置参数
+    &lcd_touch_handle   // 触摸句柄
+));
+
+}
 
 
 

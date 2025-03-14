@@ -22,7 +22,13 @@ static void screen_0_btn_2_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_CLICKED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_0_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, 
+        guider_ui.screen_2_del,  //目标屏幕的删除函数
+        &guider_ui.screen_0_del, //当前屏幕的删除函数
+        setup_scr_screen_2,      //目标屏幕初始化函数
+        LV_SCR_LOAD_ANIM_NONE,   //无动画
+        200, 200, false, true    //时间延迟等
+        );
         break;
     }
     default:
@@ -91,5 +97,8 @@ void events_init_screen_2 (lv_ui *ui)
 
 void events_init(lv_ui *ui)
 {
-
+    // 初始化各个屏幕的事件回调
+    events_init_screen_0(ui);  // 注册屏幕0的按钮事件
+    events_init_screen_1(ui);  // 注册屏幕1的按钮事件
+    events_init_screen_2(ui);  // 注册屏幕2的按钮事件
 }

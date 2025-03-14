@@ -5,6 +5,6 @@
 #include "esp_lvgl_port.h"
 
 void soft_drv_lvgl_port_init(void);
-
+void lvgl_deinit(void);
 
 #endif
