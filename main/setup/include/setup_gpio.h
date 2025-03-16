@@ -17,8 +17,17 @@
 #define TOUCH_SPI_SCLK       (GPIO_NUM_18)
 #define TOUCH_SPI_MISO       (GPIO_NUM_19)
 #define TOUCH_GPIO_MOSI      (GPIO_NUM_23)
-#define TOUCH_GPIO_CS        (GPIO_NUM_5)
+#define TOUCH_GPIO_CS        (5)
 #define TOUCH_GPIO_IRQ       (GPIO_NUM_21)
+
+
+/*按键 pins*/
+#define KEY_UP     GPIO_NUM_27
+#define KEY_DOWN   GPIO_NUM_26
+#define KEY_LEFT   GPIO_NUM_25
+#define KEY_RIGHT  GPIO_NUM_33
+#define KEY_CENTER GPIO_NUM_32
+#define KEY_SET    GPIO_NUM_35
 
 
 

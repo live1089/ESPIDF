@@ -1,5 +1,8 @@
 #include "device_lcd.h"
 #include "lvgl.h"
+// #include "esp_lcd_touch_xpt2046.h"
+// #include "esp_lcd_touch.h"
+#include "esp_log.h"
 /*
 esp_lcd_panel_reset()
 硬件/软件复位屏幕
@@ -27,8 +30,6 @@ esp_lcd_panel_disp_on_off()
 
 esp_lcd_panel_io_handle_t lcd_io_handle = NULL;
 esp_lcd_panel_handle_t lcd_panel_handle = NULL;
-esp_lcd_touch_handle_t lcd_touch_handle = NULL;
-esp_lcd_panel_io_handle_t tp_io_handle = NULL;
 
 
 // 定义 SPI 传输完成回调函数
@@ -94,43 +95,33 @@ void lcd_deinit(void)
 }
 
 
-void lcd_touch_init(void)
-{
-    /* Initialize touch HW */
-    const esp_lcd_touch_config_t tp_cfg = {
-        .x_max = 320,          // 屏幕宽度（根据实际修改）
-        .y_max = 240,          // 屏幕高度
-        .rst_gpio_num = -1,    // 若未使用复位引脚设为 -1
-        .int_gpio_num = -1,    // 中断引脚
-        .levels = {
-            .reset = 0,
-            .interrupt = 0,
-        },
-        .flags = {
-            .swap_xy = 0,
-            .mirror_x = 0,
-            .mirror_y = 1,
-        },
-    };
+// esp_lcd_panel_io_handle_t touch_io_handle;
+// esp_lcd_touch_handle_t    touch_handle;
 
-    /* XPT2046 初始化配置 */
- esp_lcd_panel_io_spi_config_t tp_io_config = 
-            ESP_LCD_TOUCH_IO_SPI_XPT2046_CONFIG(TOUCH_GPIO_CS);
+// void touch_init(void)
+// {
+//     esp_lcd_panel_io_spi_config_t touch_io_cfg = ESP_LCD_TOUCH_IO_SPI_XPT2046_CONFIG(TOUCH_GPIO_CS);
+//         ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(  
+//         (esp_lcd_spi_bus_handle_t)LCD_SPI_NUM, 
+//                                 &touch_io_cfg, 
+//                                 &touch_io_handle));
 
-ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_SPI_NUM, &tp_io_config, &tp_io_handle));
+//     esp_lcd_touch_config_t touch_cfg = {
+//         .int_gpio_num = TOUCH_GPIO_IRQ,    // 必须填写实际使用的中断引脚号
+//         .rst_gpio_num = GPIO_NUM_NC,   // 如果没有复位引脚，使用GPIO_NUM_NC
+//         .levels = { 
+//             .reset = 0,          // 复位电平
+//             .interrupt = 1       // 中断触发电平
+//         },
+//         .x_max = 320,
+//         .y_max = 240,
+//         .flags = {
+//             .swap_xy = 0,              // 是否交换XY坐标
+//             .mirror_x = 0,             // 是否镜像X轴
+//             .mirror_y = 1              // 是否镜像Y轴
+//         },
+//     };
 
-/*初始化触摸控制器*/
-ESP_ERROR_CHECK(esp_lcd_touch_new_spi_xpt2046(
-    tp_io_handle,      
-    &(tp_cfg),   // 配置参数
-    &lcd_touch_handle   // 触摸句柄
-));
-
-}
-
-
-
-
-
-
-
+//     esp_lcd_touch_new_spi_xpt2046(touch_io_handle,&touch_cfg,&touch_handle);
+//     ESP_LOGI("TOUCH", "Touch controller initialized successfully");
+// }

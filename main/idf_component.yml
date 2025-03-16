@@ -6,6 +6,6 @@ dependencies:
   lvgl/lvgl:
     version: "=9.2.1"
     public: true
-  atanisoft/esp_lcd_touch_xpt2046:
-    version: "^1.0.5"
+  # atanisoft/esp_lcd_touch_xpt2046:
+  #   version: "^1.0.5"
     

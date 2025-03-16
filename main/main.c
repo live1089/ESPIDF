@@ -11,53 +11,34 @@
 #include "device_lcd.h"
 #include "soft_drv_lvgl_port.h"
 #include "lv_ui.h"
-#include "Guider_ui/custom/custom.h"
-#include "Guider_ui/generated/gui_guider.h"
-#include "Guider_ui/generated/events_init.h"
-
-
-
-// 声明全局UI实例（与gui_guider.h中的extern声明对应）
-lv_ui guider_ui;
+#include "setup_uart.h"
+#include "esp_log.h"  // ESP-IDF 日志库
+#include "device_lcd.h"
+#include "Digital_key.h"
 
 void app_main(void)
 {
+    esp_log_level_set("*", ESP_LOG_DEBUG);
+    
     // 1. 硬件初始化（必须最先执行）
     setup_gpio_init();
-    device_lcd_init();
-    lcd_touch_init();
-
+    // setup_uart_init();
+    // device_lcd_init();
+    // touch_init();
+    
     // 2. LVGL驱动初始化
-    soft_drv_lvgl_port_init();
+    // soft_drv_lvgl_port_init();
 
     // 4. 创建UI界面（必须在LVGL锁内操作）
-    lvgl_port_lock(0);
-    setup_ui(&guider_ui);
-    events_init(&guider_ui); 
-    lvgl_port_unlock();
+    // lvgl_port_lock(0);
+    // lv_ui_init();
+    // lvgl_port_unlock();
+
 
     // 6. 主循环
     for(;;) {
-
-        // vTaskDelay(pdMS_TO_TICKS(50)); // 保持50ms周期
+        button_task();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
