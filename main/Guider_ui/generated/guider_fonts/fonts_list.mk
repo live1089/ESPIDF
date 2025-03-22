@@ -1,0 +1,1 @@
+GEN_CSRCS += lv_font_HYCuHeiJ_16.c lv_font_HYCuHeiJ_12.c lv_font_HYCuHeiJ_10.c lv_font_HYBaoSongJ_12.c lv_font_HYBaoSongJ_13.c lv_font_HYCuHeiJ_14.c

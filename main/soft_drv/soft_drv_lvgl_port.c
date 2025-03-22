@@ -52,15 +52,6 @@ lvgl_port_display_cfg_t disp_cfg = {
 };
 lvgl_disp = lvgl_port_add_disp(&disp_cfg); // 添加显示设备到 LVGL
 
-
-
-// lvgl_port_touch_cfg_t touch_cfg = {
-//     .disp = &lvgl_disp,
-//     .handle = touch_io_handle
-// };
-
-// lvgl_touch_indev = lvgl_port_add_touch(&touch_cfg);
-
 }
 
 

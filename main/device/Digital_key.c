@@ -1,7 +1,7 @@
 #include "Digital_key.h"
 #include "esp_log.h"
 
-typedef enum { DIR_NONE, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT, DIR_CENTER, DIR_SET } direction_t;
+
 
 direction_t debounce_detect() {
     static struct {

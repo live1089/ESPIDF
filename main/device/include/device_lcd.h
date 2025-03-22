@@ -13,10 +13,9 @@
 
 extern esp_lcd_panel_io_handle_t   lcd_io_handle;
 extern esp_lcd_panel_handle_t      lcd_panel_handle;
-// extern esp_lcd_panel_io_handle_t touch_io_handle;
-// extern esp_lcd_touch_handle_t    touch_handle;
+
 
 void device_lcd_init(void);
 void lcd_deinit(void);
-// void touch_init(void);
+
 #endif

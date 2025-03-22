@@ -14,8 +14,11 @@
 #define KEY_CENTER GPIO_NUM_32
 #define KEY_SET    GPIO_NUM_35
 
-
+typedef enum { DIR_NONE, DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT, DIR_CENTER, DIR_SET } direction_t;
 // void key_init(void);
 void button_task(void);
+direction_t debounce_detect();
+
+
 
 #endif

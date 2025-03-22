@@ -94,34 +94,3 @@ void lcd_deinit(void)
     gpio_reset_pin(LCD_BLK_NUM);
 }
 
-
-// esp_lcd_panel_io_handle_t touch_io_handle;
-// esp_lcd_touch_handle_t    touch_handle;
-
-// void touch_init(void)
-// {
-//     esp_lcd_panel_io_spi_config_t touch_io_cfg = ESP_LCD_TOUCH_IO_SPI_XPT2046_CONFIG(TOUCH_GPIO_CS);
-//         ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(  
-//         (esp_lcd_spi_bus_handle_t)LCD_SPI_NUM, 
-//                                 &touch_io_cfg, 
-//                                 &touch_io_handle));
-
-//     esp_lcd_touch_config_t touch_cfg = {
-//         .int_gpio_num = TOUCH_GPIO_IRQ,    // 必须填写实际使用的中断引脚号
-//         .rst_gpio_num = GPIO_NUM_NC,   // 如果没有复位引脚，使用GPIO_NUM_NC
-//         .levels = { 
-//             .reset = 0,          // 复位电平
-//             .interrupt = 1       // 中断触发电平
-//         },
-//         .x_max = 320,
-//         .y_max = 240,
-//         .flags = {
-//             .swap_xy = 0,              // 是否交换XY坐标
-//             .mirror_x = 0,             // 是否镜像X轴
-//             .mirror_y = 1              // 是否镜像Y轴
-//         },
-//     };
-
-//     esp_lcd_touch_new_spi_xpt2046(touch_io_handle,&touch_cfg,&touch_handle);
-//     ESP_LOGI("TOUCH", "Touch controller initialized successfully");
-// }
