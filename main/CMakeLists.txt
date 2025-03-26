@@ -24,7 +24,7 @@ idf_component_register(
         "./setup/setup_uart.c"
         "./setup/setup_wifi.c"
         # "./device/device_lcd.c"
-        # "./device/Digital_key.c"
+        "./device/Digital_key.c"
         "./soft_drv/soft_drv_lvgl_port.c"
         # "./lv_ui/lv_ui.c"
         "./Guider_ui/custom/custom.c"

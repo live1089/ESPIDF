@@ -4,6 +4,9 @@
 #include "device_lcd.h"
 #include "esp_lvgl_port.h"
 #include "esp_log.h"
+#include "esp_lvgl_port_button.h"
+
+static const char *TAG = "LVGL_INTT";
 
 #define LCD_DRAW_BUFF_HEIGHT (40)     // 绘图缓冲区高度（行数）
 #define LCD_BL_NO_LEVEL (1)           // 背光引脚电平（1 = 开启）
@@ -11,6 +14,10 @@
 #define LCD_V_RES (240)               // 屏幕垂直分辨率
 #define LCD_DEAW_BUFF_DOUBLE (0)      // 是否启用双缓冲（0 = 禁用）
 
+//按键
+button_handle_t button_prev = NULL;
+button_handle_t button_next = NULL;
+button_handle_t button_enter = NULL;
 
 static lv_display_t *lvgl_disp = NULL;// LVGL 显示设备句柄
 
@@ -50,10 +57,22 @@ lvgl_port_display_cfg_t disp_cfg = {
 #endif
     }
 };
-lvgl_disp = lvgl_port_add_disp(&disp_cfg); // 添加显示设备到 LVGL
+    lvgl_disp = lvgl_port_add_disp(&disp_cfg); // 添加显示设备到 LVGL
 
+    lvgl_port_nav_btns_cfg_t btn_cfg = {
+        .disp = lvgl_disp,
+        .button_next = button_next,
+        .button_enter = button_enter,
+        .button_prev = button_prev
+};
+    
+// 将导航按钮添加到 LVGL
+    lv_indev_t *buttons = lvgl_port_add_navigation_buttons(&btn_cfg);
+    if (buttons == NULL) {
+        ESP_LOGE(TAG, "Failed to add navigation buttons to LVGL");
+        return;
+    }
 }
-
 
 
 

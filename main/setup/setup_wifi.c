@@ -3,13 +3,15 @@
 
 static const char *TAG = "wifi";
 // 定义事件组和连接状态标志位
-static EventGroupHandle_t s_wifi_event_group;
+EventGroupHandle_t s_wifi_event_group;
 
 #define WIFI_CONNECTED_BIT BIT0 // 连接成功标志
 #define WIFI_FAIL_BIT BIT1      // 连接失败标志
+
 #define WIFI_MAXIMUM_RETRY 5    // WIFI最大连接次数
 uint8_t s_retry_num = 0;
 
+#if 0
 /* Wi-Fi 连接状态检查 */
 static bool wifi_connected()
 {
@@ -28,8 +30,7 @@ static bool wifi_connected()
 
     return ip_info.ip.addr != 0;
 }
-
-
+#endif
 
 static void wifi_event_handle(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
@@ -77,7 +78,6 @@ static void wifi_event_handle(void *event_handler_arg, esp_event_base_t event_ba
                 ESP_LOGE(TAG, "Maximum retries reache");
                 esp_restart(); // 达到最大重试后重启设备
             }
-
             break;
         }
         }
@@ -104,11 +104,6 @@ esp_err_t wifi_init_sta(const char *ssid, const char *password)
     /*初始化网络接口层(TCP/IP协议栈)*/
     ESP_ERROR_CHECK(esp_netif_init());
 
-    /*创建WiFi事件组,用于同步WiFi连接状态*/
-    s_wifi_event_group = xEventGroupCreate();
-
-    /* 创建默认事件循环,用于处理系统事件 */
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
     /* 创建默认的station模式网络接口 */
     esp_netif_t *netif = esp_netif_create_default_wifi_sta();
     if (!netif)
@@ -116,6 +111,10 @@ esp_err_t wifi_init_sta(const char *ssid, const char *password)
         ESP_LOGE(TAG, "Failed to create default STA interface");
         return ESP_OK;
     }
+
+    /* 创建默认事件循环,用于处理系统事件 */
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
     // Wi-Fi 配置
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -147,27 +146,36 @@ void scan_wifi()
         .ssid = NULL,
         .bssid = NULL,
         .channel = 0,
-        .show_hidden = true,                // 是否扫描隐藏的 SSID
-        .scan_type = WIFI_SCAN_TYPE_ACTIVE, // 扫描类型
+        .show_hidden = true,
+        .scan_type = WIFI_SCAN_TYPE_ACTIVE,
         .scan_time = {
-            .active = {.min = 100, .max = 150}, // 主动扫描时间
-            .passive = 360                      // 被动扫描时间
-        }};
-    esp_wifi_scan_start(&wifi_scan_cfg, true);
+            .active = {.min = 100, .max = 150},
+            .passive = 360
+        }
+    };
+
+    esp_err_t err = esp_wifi_scan_start(&wifi_scan_cfg, true);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "WiFi scan start failed: %s", esp_err_to_name(err));
+        return;
+    }
 
     uint16_t ap_count = 0;
     esp_wifi_scan_get_ap_num(&ap_count);
 
     wifi_ap_record_t *ap_records = malloc(sizeof(wifi_ap_record_t) * ap_count);
-    esp_wifi_scan_get_ap_records(&ap_count, ap_records);
-
-    // 遍历扫描结果
-    for (int i = 0; i < ap_count; i++)
-    {
-        printf("SSID: %s, RSSI: %d\n", ap_records[i].ssid, ap_records[i].rssi);
+    if (ap_records == NULL) {
+        ESP_LOGE(TAG, "Failed to allocate memory for AP records");
+        return;
     }
 
-    /*清理AP记录，释放内存*/
+    esp_wifi_scan_get_ap_records(&ap_count, ap_records);
+
+    for (int i = 0; i < ap_count; i++)
+    {
+        ESP_LOGI(TAG, "SSID: %s, RSSI: %d", ap_records[i].ssid, ap_records[i].rssi);
+    }
+
     free(ap_records);
     esp_wifi_clear_ap_list();
 }
@@ -182,6 +190,9 @@ void wifi_task(void *pvParams)
 {
     const char *ssid = wifi_ssid;
     const char *password = wifi_password;
+
+    /*创建WiFi事件组,用于同步WiFi连接状态*/
+    s_wifi_event_group = xEventGroupCreate();
 
     // 初始化 NVS
     esp_err_t ret = nvs_flash_init();
@@ -211,7 +222,7 @@ void wifi_task(void *pvParams)
             ESP_LOGI(TAG, "Connected to AP");
 
             // 触发其他任务（例如启动 HTTP 客户端）
-            // xEventGroupSetBits(network_events, NETWORK_READY_BIT);
+            xEventGroupSetBits(s_wifi_event_group, NETWORK_READY_BIT);
 
             // 清除事件标志
             xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);

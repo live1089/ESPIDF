@@ -5,8 +5,7 @@
 #include "esp_err.h"
 
 
-void http_client_init();
-
+void weather_task(void *pvParams);
 
 
 

@@ -10,8 +10,13 @@
 
 
 
-#define  wifi_ssid          "iQOO Z3"
-#define  wifi_password      "12ui678g"
+#define  wifi_ssid          "iQOO Neo9"
+#define  wifi_password      "53k8w7x73zxug9w"
+
+extern EventGroupHandle_t s_wifi_event_group;
+
+#define NETWORK_READY_BIT BIT3
+
 
 void wifi_task(void *pvParams);
 

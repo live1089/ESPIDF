@@ -41,7 +41,7 @@
 void custom_handle_brightness(uint8_t value) {  
     // 1. 业务逻辑：设置亮度（对接硬件或模拟）  
     // 假设这里调用硬件接口：hardware_set_brightness(value);  
-    direction_t dir = debounce_detect();
+    // direction_t dir = debounce_detect();
 
     // 2. 界面更新（示例）  
     lv_label_set_text_fmt(guider_ui.screen_2_label_4, "%d", value);

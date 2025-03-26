@@ -17,8 +17,8 @@
 #include "device_lcd.h"
 #include "Digital_key.h"
 #include "Guider_ui/custom/custom.h"
-
-
+#include "weather.h"
+#include "Digital_key.h"
 
 /*
 1. 任务分配原则
@@ -156,12 +156,10 @@ void app_main(void)
     Hardware_init();
 
 
-        // 创建网络事件组
-    // network_events = xEventGroupCreate();
     // 启动 Wi-Fi 任务（优先级高于HTTP任务）
-    xTaskCreate(wifi_task, "wifi_task", 4096, NULL, 4, NULL);
-
-
+    // xTaskCreatePinnedToCore(wifi_task, "wifi_task", 4096, NULL, 4, NULL,0);
+    // xTaskCreatePinnedToCore(weather_task,"weather_task",4096,NULL,3,NULL,0);
+    xTaskCreatePinnedToCore(key_task, "button_task", 4096, NULL, 5, NULL, 0);
 
     // // 4. 创建UI界面（必须在LVGL锁内操作）
     // lvgl_port_lock(0);

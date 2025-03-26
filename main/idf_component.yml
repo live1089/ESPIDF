@@ -6,6 +6,8 @@ dependencies:
   lvgl/lvgl:
     version: "=9.2.1"
     public: true
+  espressif/button:
+    version: "^4.1.1"
   # atanisoft/esp_lcd_touch_xpt2046:
   #   version: "^1.0.5"
     

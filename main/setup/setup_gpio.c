@@ -20,7 +20,7 @@ void setup_gpio_init(void)
         };
         ESP_ERROR_CHECK(gpio_config(&rst_gpio_cfg));
 
- 
+    //按键GPIO
     gpio_config_t cfg = {
         .pin_bit_mask = (1ULL<<KEY_UP) | (1ULL<<KEY_DOWN) | 
                        (1ULL<<KEY_LEFT) | (1ULL<<KEY_RIGHT) |

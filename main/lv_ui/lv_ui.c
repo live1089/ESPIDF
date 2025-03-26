@@ -1,6 +1,7 @@
 #include "lv_ui.h"
 
 
+/* 
 lv_obj_t *scr;
 lv_obj_t *ui_test;
 lv_obj_t *ui_page_zw_label;
@@ -8,7 +9,7 @@ void lv_ui_init(void)
 {
     lvgl_port_lock(0);
 
-    scr=lv_scr_act();/*获取活动屏幕*/
+    scr=lv_scr_act();
 
     ui_test = lv_obj_create(scr);
     lv_obj_set_size(ui_test, LV_HOR_RES, LV_VER_RES);
@@ -20,5 +21,17 @@ void lv_ui_init(void)
 
     
     lvgl_port_unlock();
+} 
+*/
 
+
+
+void display_task(void *pvParams) {
+    while(1) {
+
+
+
+
+        vTaskDelay(pdMS_TO_TICKS(16)); // ~60Hz
+    }
 }

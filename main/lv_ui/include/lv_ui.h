@@ -5,7 +5,8 @@
 #include "device_lcd.h"
 
 
-void lv_ui_init(void);
+
+// void lv_ui_init(void);
 
 
 
