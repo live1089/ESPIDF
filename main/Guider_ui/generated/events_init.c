@@ -20,17 +20,11 @@
 
 static void screen_btn_1_event_handler (lv_event_t *e)
 {
-    uint32_t mem_before = esp_get_free_heap_size();
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
-    {       
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_1, guider_ui.screen_1_del, &guider_ui.screen_del, setup_scr_screen_1, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
-        
-        if((mem_before - esp_get_free_heap_size()) > 500) {
-        ESP_LOGW("MEM", "Event可能泄漏内存！Delta: %lu", mem_before - esp_get_free_heap_size());
-    }
-
+    {  
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_1, guider_ui.screen_1_del, &guider_ui.screen_del, setup_scr_screen_1, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -44,7 +38,7 @@ static void screen_btn_2_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
 
         break;
     }
@@ -59,7 +53,7 @@ static void screen_btn_3_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -80,7 +74,7 @@ static void screen_1_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_1_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_1_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, false, true);
         break;
     }
     default:
@@ -99,7 +93,7 @@ static void screen_2_list_1_item0_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_4, guider_ui.screen_4_del, &guider_ui.screen_2_del, setup_scr_screen_4, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_4, guider_ui.screen_4_del, &guider_ui.screen_2_del, setup_scr_screen_4, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -113,7 +107,7 @@ static void screen_2_list_1_item1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_5, guider_ui.screen_5_del, &guider_ui.screen_2_del, setup_scr_screen_5, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_5, guider_ui.screen_5_del, &guider_ui.screen_2_del, setup_scr_screen_5, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -127,7 +121,7 @@ static void screen_2_list_1_item2_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_3, guider_ui.screen_3_del, &guider_ui.screen_2_del, setup_scr_screen_3, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_3, guider_ui.screen_3_del, &guider_ui.screen_2_del, setup_scr_screen_3, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -141,7 +135,7 @@ static void screen_2_list_1_item3_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_2_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_2_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -163,7 +157,7 @@ static void screen_3_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_3_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_3_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -197,7 +191,7 @@ static void screen_4_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_4_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_4_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -230,7 +224,7 @@ static void screen_5_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_5_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 200, 200, false, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_5_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, false, true);
         break;
     }
     default:
@@ -250,7 +244,7 @@ static void screen_6_list_1_item0_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_7, guider_ui.screen_7_del, &guider_ui.screen_6_del, setup_scr_screen_7, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_7, guider_ui.screen_7_del, &guider_ui.screen_6_del, setup_scr_screen_7, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -264,7 +258,7 @@ static void screen_6_list_1_item1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_8, guider_ui.screen_8_del, &guider_ui.screen_6_del, setup_scr_screen_8, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_8, guider_ui.screen_8_del, &guider_ui.screen_6_del, setup_scr_screen_8, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -278,7 +272,7 @@ static void screen_6_list_1_item2_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_10, guider_ui.screen_10_del, &guider_ui.screen_6_del, setup_scr_screen_10, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_10, guider_ui.screen_10_del, &guider_ui.screen_6_del, setup_scr_screen_10, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -292,7 +286,7 @@ static void screen_6_list_1_item3_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_9, guider_ui.screen_9_del, &guider_ui.screen_6_del, setup_scr_screen_9, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_9, guider_ui.screen_9_del, &guider_ui.screen_6_del, setup_scr_screen_9, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -306,7 +300,7 @@ static void screen_6_list_1_item4_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_6_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_6_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -329,7 +323,7 @@ static void screen_7_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_7_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_7_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -365,7 +359,7 @@ static void screen_8_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_8_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_8_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -401,7 +395,7 @@ static void screen_9_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_9_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_9_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -437,7 +431,7 @@ static void screen_10_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_10_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 200, 200, true, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_10_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:

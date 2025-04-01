@@ -93,7 +93,9 @@ void lvgl_task(void *param)
 {
     while (1)
     {
+        lvgl_port_lock(0);
         lv_task_handler(); // 处理 LVGL 事件
+        lvgl_port_unlock();
         vTaskDelay(pdMS_TO_TICKS(10)); 
     }
 }

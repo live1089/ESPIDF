@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include "gui_guider.h"
 #include "widgets_init.h"
+#include "esp_log.h"
+#include "esp_lvgl_port.h"
 
 void ui_init_style(lv_style_t * style)
 {
@@ -20,7 +22,7 @@ void ui_init_style(lv_style_t * style)
         lv_style_init(style);
 }
 
-void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, bool * old_scr_del, ui_setup_scr_t setup_scr,
+/* void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, bool * old_scr_del, ui_setup_scr_t setup_scr,
                            lv_screen_load_anim_t anim_type, uint32_t time, uint32_t delay, bool is_clean, bool auto_del)
 {
     lv_obj_t * act_scr = lv_screen_active();
@@ -32,6 +34,7 @@ void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, boo
     }
 #endif
     if (auto_del && is_clean) {
+        lv_obj_remove_event_cb(act_scr, NULL);
         lv_obj_clean(act_scr);
     }
     if (new_scr_del) {
@@ -39,6 +42,57 @@ void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, boo
     }
     lv_screen_load_anim(*new_scr, anim_type, time, delay, auto_del);
     *old_scr_del = auto_del;
+} */
+
+void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, bool * old_scr_del, ui_setup_scr_t setup_scr,
+                           lv_screen_load_anim_t anim_type, uint32_t time, uint32_t delay, bool is_clean, bool auto_del)
+{
+    lvgl_port_lock(0);
+    lv_obj_t * act_scr = lv_screen_active();
+    lv_group_t *group = lv_obj_get_group(act_scr);
+
+#if LV_USE_GUIDER_SIMULATOR && LV_USE_FREEMASTER
+#include "gg_external_data.h"
+    if(auto_del) {
+        gg_edata_task_clear(act_scr);
+    }
+#endif
+    if (auto_del && is_clean) {
+        lv_obj_remove_event_cb(act_scr, NULL);
+        lv_obj_clean(act_scr);
+    }
+    if (new_scr_del && !lv_obj_is_valid(*new_scr)) {
+        setup_scr(ui);
+    }
+
+    *old_scr_del = auto_del;
+        if (lv_obj_is_valid(*new_scr)) {
+        lv_screen_load_anim(*new_scr, anim_type, time, delay, auto_del);
+    } else {
+        ESP_LOGE("UI", "New screen is invalid!");
+    }
+    
+    if (auto_del && lv_obj_is_valid(act_scr)) {
+        if (group)
+        {
+            lv_group_remove_all_objs(act_scr);
+        }
+        lv_obj_delete(act_scr); // 显式删除旧页面
+        act_scr = NULL;      // 指针置空
+    }
+    
+    lv_indev_t *indev = lv_indev_get_next(NULL);
+    while (indev) {
+        if (lv_indev_get_type(indev) == LV_INDEV_TYPE_ENCODER) {
+            lv_group_t *group = lv_indev_get_group(indev);
+            if (group) {
+                lv_group_set_editing(group, false);  // 退出编辑模式
+                lv_group_focus_obj(NULL);            // 清空焦点
+            }
+        }
+        indev = lv_indev_get_next(indev);
+    }
+    lvgl_port_unlock();
 }
 
 void ui_animation(void * var, uint32_t duration, int32_t delay, int32_t start_value, int32_t end_value, lv_anim_path_cb_t path_cb,

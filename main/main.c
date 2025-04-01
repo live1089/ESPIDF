@@ -2,7 +2,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
-#include "freertos/semphr.h"
 #include "freertos/event_groups.h"
 #include <stdint.h>
 
@@ -133,13 +132,13 @@ CPU 核心分配（针对双核 ESP32）​
 
 
 
-
 /* 堆监控 */
 void mem_monitor_task(void *arg) {
     while(1) {
         ESP_LOGI("MEM", "Free: %luKB", esp_get_free_heap_size()/1024);
         vTaskDelay(pdMS_TO_TICKS(2000));
     }
+    
 }
 
 /* 任务堆栈监控 */
@@ -199,7 +198,6 @@ void app_main(void)
     // 启动 Wi-Fi 任务（优先级高于HTTP任务）
     // xTaskCreatePinnedToCore(wifi_task, "wifi_task", 4096, NULL, 4, NULL,0);
     // xTaskCreatePinnedToCore(weather_task,"weather_task",4096,NULL,3,NULL,0);
-    // xTaskCreatePinnedToCore(key_task, "button_task", 4096, NULL, 5, NULL, 0);
     TaskHandle_t lvgl_stack_handle = NULL;
     xTaskCreatePinnedToCore(lvgl_task, "lvgl_task", 6144, NULL, 6, &lvgl_stack_handle, 1);
 
