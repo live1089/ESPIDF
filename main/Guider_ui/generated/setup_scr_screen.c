@@ -162,6 +162,7 @@ void setup_scr_screen(lv_ui *ui)
     ui->screen_label_1 = lv_label_create(ui->screen_cont_1);
     lv_obj_set_pos(ui->screen_label_1, 3, 2);
     lv_obj_set_size(ui->screen_label_1, 21, 10);
+    lv_obj_add_flag(ui->screen_label_1, LV_OBJ_FLAG_HIDDEN);
     lv_label_set_text(ui->screen_label_1, "" LV_SYMBOL_WIFI " ");
     lv_label_set_long_mode(ui->screen_label_1, LV_LABEL_LONG_WRAP);
 

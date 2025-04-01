@@ -2,6 +2,7 @@
 #define SETUP_GPIO_H_
 
 #include "driver/gpio.h"
+#include "driver/ledc.h"
 
 #define LCD_SPI_NUM         (SPI2_HOST)
 //lcd pin set
@@ -12,6 +13,7 @@
 #define LCD_RST_NUM     GPIO_NUM_4
 #define LCD_DC_NUM      GPIO_NUM_2
 #define LCD_CS_NUM      GPIO_NUM_15
+#define LCD_LEDC_CH  LEDC_CHANNEL_0  // 使用 LEDC 通道 0
 
 /* LCD touch pins */
 #define TOUCH_SPI_SCLK       (GPIO_NUM_18)
@@ -32,6 +34,6 @@
 
 
 void setup_gpio_init(void);
-
+esp_err_t init_backlight_pwm();
 
 #endif

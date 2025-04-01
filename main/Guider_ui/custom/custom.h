@@ -13,17 +13,11 @@
 extern "C" {
 #endif
 
-#include "./Guider_ui/generated/gui_guider.h"
-
-
-
+#include "../Guider_ui/generated/gui_guider.h"
 
 void custom_init(lv_ui *ui);
 void custom_handle_brightness(uint8_t value);  // 声明业务函数
-
-
-
-
+void update_memory_display();
 
 #ifdef __cplusplus
 }

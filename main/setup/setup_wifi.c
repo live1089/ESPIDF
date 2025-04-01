@@ -11,9 +11,9 @@ EventGroupHandle_t s_wifi_event_group;
 #define WIFI_MAXIMUM_RETRY 5    // WIFI最大连接次数
 uint8_t s_retry_num = 0;
 
-#if 0
+#if 1
 /* Wi-Fi 连接状态检查 */
-static bool wifi_connected()
+bool wifi_connected()
 {
     wifi_ap_record_t ap_info;
     if (esp_wifi_sta_get_ap_info(&ap_info) != ESP_OK)

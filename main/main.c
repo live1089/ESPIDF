@@ -4,13 +4,13 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "freertos/event_groups.h"
-
+#include <stdint.h>
 
 #include "setup_gpio.h"
 #include "setup_spi.h"
 #include "device_lcd.h"
 #include "soft_drv_lvgl_port.h"
-// #include "lv_ui.h"
+#include "lv_ui.h"
 #include "setup_uart.h"
 #include "setup_wifi.h"
 #include "esp_log.h"  // ESP-IDF 日志库
@@ -19,7 +19,7 @@
 #include "Guider_ui/custom/custom.h"
 #include "weather.h"
 #include "Digital_key.h"
-
+#include "..\Guider_ui\generated\events_init.h"
 /*
 1. 任务分配原则
 任务模块	优先级	堆栈大小	执行频率	关键特性
@@ -56,12 +56,6 @@ void sensor_task(void *pvParams) {
         vTaskDelay(pdMS_TO_TICKS(1000)); // 1秒更新一次
     }
 }
-
-
-
-
-
-
 
 
 /*
@@ -139,67 +133,93 @@ CPU 核心分配（针对双核 ESP32）​
 
 
 
+
+/* 堆监控 */
+void mem_monitor_task(void *arg) {
+    while(1) {
+        ESP_LOGI("MEM", "Free: %luKB", esp_get_free_heap_size()/1024);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+    }
+}
+
+/* 任务堆栈监控 */
+void stack_monitor(void *pvParameters) {
+    TaskHandle_t *task_handle = (TaskHandle_t *)pvParameters;
+    while(1) {
+        ESP_LOGI("STACK", "Free Stack: %u bytes", 
+                (uxTaskGetStackHighWaterMark(*task_handle)*4));
+        vTaskDelay(pdMS_TO_TICKS(3000));
+    }
+}
+
+
+
 void Hardware_init()
 {
     // 1. 硬件初始化
     setup_gpio_init();
+    init_backlight_pwm();
+    gpio_key_init();
     // setup_uart_init();
-    // device_lcd_init();
+    device_lcd_init();
     // 2. LVGL驱动初始化
-    // soft_drv_lvgl_port_init();
+    soft_drv_lvgl_port_init();
+    
+    lvgl_port_lock(0);
+    lv_init();
+    setup_ui(&guider_ui);
+    events_init(&guider_ui);
+    custom_init(&guider_ui);
+    lvgl_port_unlock();
 }
+/* 
+// 在关键函数入口/出口插入监控代码
+void sensitive_function() {
+    static UBaseType_t entry_stack; 
+    entry_stack = uxTaskGetStackHighWaterMark(NULL) * 4;
+    
+    // ... 函数逻辑
+    
+    UBaseType_t delta = entry_stack - (uxTaskGetStackHighWaterMark(NULL) * 4);
+    ESP_LOGI("STACK_PROFILE", "%s used: %dB", __func__, delta);
+}
+ */
+
+
+
 
 void app_main(void)
 {
     esp_log_level_set("*", ESP_LOG_DEBUG);
     
     Hardware_init();
-
+    // queue_init();
+    // lv_ui_init();
 
     // 启动 Wi-Fi 任务（优先级高于HTTP任务）
     // xTaskCreatePinnedToCore(wifi_task, "wifi_task", 4096, NULL, 4, NULL,0);
     // xTaskCreatePinnedToCore(weather_task,"weather_task",4096,NULL,3,NULL,0);
-    xTaskCreatePinnedToCore(key_task, "button_task", 4096, NULL, 5, NULL, 0);
+    // xTaskCreatePinnedToCore(key_task, "button_task", 4096, NULL, 5, NULL, 0);
+    TaskHandle_t lvgl_stack_handle = NULL;
+    xTaskCreatePinnedToCore(lvgl_task, "lvgl_task", 6144, NULL, 6, &lvgl_stack_handle, 1);
 
-    // // 4. 创建UI界面（必须在LVGL锁内操作）
-    // lvgl_port_lock(0);
-    // setup_ui(&guider_ui);
-    // lvgl_port_unlock();
+    // 创建低优先级监控任务
+    xTaskCreatePinnedToCore(mem_monitor_task, "mem_mon", 2048, NULL, 2, NULL,0);
+    xTaskCreatePinnedToCore(stack_monitor, "stack_mon", 1024, &lvgl_stack_handle, 2, NULL,0);
+    // xTaskCreatePinnedToCore(iram_monitor_task, "iram_mon", 2048, NULL, 2, NULL,0);
+
 
 
     // 6. 主循环
     for(;;) {
-        // button_task();
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
-
-
-
-
-
-
-
-
-    //     // 初始化通信资源
-    // display_queue = xQueueCreate(10, sizeof(float));
-    // network_events = xEventGroupCreate();
-    // weather_mutex = xSemaphoreCreateMutex();
-
-    // // 创建任务（按优先级从高到低）
-    // xTaskCreate(display_task, "display", 8192, NULL, 6, NULL);
-    // xTaskCreate(input_task, "input", 2048, NULL, 7, NULL);
-    // xTaskCreate(sensor_task, "sensor", 2048, NULL, 5, NULL);
-    // xTaskCreate(wifi_task, "wifi", 4096, NULL, 4, NULL);
-    // xTaskCreate(weather_task, "weather", 4096, NULL, 3, NULL);
-
-    // 主任务可结束或保留为监控任务
-    // vTaskDelete(NULL);
 }
 
 
 
 /*低功耗任务*/
-// void enter_sleep_mode() {
-//     // screen_set_brightness(10); // 降低亮度
-//     // vTaskDelay(pdMS_TO_TICKS(100)); // 10 FPS
-// }
+/* void enter_sleep_mode() {
+    hardware_set_brightness(10); // 降低亮度
+    vTaskDelay(pdMS_TO_TICKS(100)); // 10 FPS
+} */

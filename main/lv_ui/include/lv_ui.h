@@ -6,8 +6,8 @@
 
 
 
-// void lv_ui_init(void);
-
+void lv_ui_init(void);
+extern lv_group_t* group;
 
 
 

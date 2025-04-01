@@ -6,6 +6,9 @@
 #include "esp_log.h"
 #include "esp_lvgl_port_button.h"
 
+#include "Digital_key.h"
+#include "lv_ui.h"
+
 static const char *TAG = "LVGL_INTT";
 
 #define LCD_DRAW_BUFF_HEIGHT (40)     // 绘图缓冲区高度（行数）
@@ -14,15 +17,15 @@ static const char *TAG = "LVGL_INTT";
 #define LCD_V_RES (240)               // 屏幕垂直分辨率
 #define LCD_DEAW_BUFF_DOUBLE (0)      // 是否启用双缓冲（0 = 禁用）
 
-//按键
-button_handle_t button_prev = NULL;
-button_handle_t button_next = NULL;
-button_handle_t button_enter = NULL;
+
 
 static lv_display_t *lvgl_disp = NULL;// LVGL 显示设备句柄
+lv_indev_t *indev;
 
 void soft_drv_lvgl_port_init(void)
 {
+    
+    
     ESP_ERROR_CHECK(gpio_set_level(LCD_BLK_NUM,LCD_BL_NO_LEVEL));
 
     lvgl_port_cfg_t lvgl_cfg = {
@@ -59,23 +62,41 @@ lvgl_port_display_cfg_t disp_cfg = {
 };
     lvgl_disp = lvgl_port_add_disp(&disp_cfg); // 添加显示设备到 LVGL
 
+    ESP_LOGI(TAG,"lvgl_port_init success");
+   // 在配置之前检查按钮句柄是否有效
+    if (btn_right == NULL || btn_center == NULL || btn_left == NULL) {
+    ESP_LOGE(TAG, "Button handles are not valid!");
+    return;
+}
     lvgl_port_nav_btns_cfg_t btn_cfg = {
+        
         .disp = lvgl_disp,
-        .button_next = button_next,
-        .button_enter = button_enter,
-        .button_prev = button_prev
+        .button_prev = btn_left,
+        .button_next = btn_right,
+        .button_enter = btn_center,
 };
     
-// 将导航按钮添加到 LVGL
-    lv_indev_t *buttons = lvgl_port_add_navigation_buttons(&btn_cfg);
-    if (buttons == NULL) {
-        ESP_LOGE(TAG, "Failed to add navigation buttons to LVGL");
-        return;
+//  将导航按钮添加到 LVGL
+    
+    indev = lvgl_port_add_navigation_buttons(&btn_cfg);
+    if (indev == NULL) {
+        ESP_LOGE(TAG, "Failed to create input device!");
+    } else {
+        ESP_LOGI(TAG, "Input device created successfully: %p", indev);
     }
+
 }
 
 
-
+// 创建一个任务来处理 LVGL 事件
+void lvgl_task(void *param)
+{
+    while (1)
+    {
+        lv_task_handler(); // 处理 LVGL 事件
+        vTaskDelay(pdMS_TO_TICKS(10)); 
+    }
+}
 
 
 

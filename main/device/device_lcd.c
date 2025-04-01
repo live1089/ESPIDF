@@ -30,7 +30,7 @@ esp_lcd_panel_disp_on_off()
 
 esp_lcd_panel_io_handle_t lcd_io_handle = NULL;
 esp_lcd_panel_handle_t lcd_panel_handle = NULL;
-
+static const char *TAG = "device_lcd";
 
 // 定义 SPI 传输完成回调函数
 // static bool spi_trans_done_callback(esp_lcd_panel_io_handle_t io, esp_lcd_panel_io_event_data_t *edata, void *ctx) {
@@ -73,8 +73,7 @@ void device_lcd_init(void)
      // 4. 初始化面板
     ESP_ERROR_CHECK(esp_lcd_panel_init(lcd_panel_handle));
 
-    /* LCD backlight on */
-    ESP_ERROR_CHECK(gpio_set_level(LCD_BLK_NUM, 1));
+    hardware_set_brightness(50);
     
     // 6. 设置显示偏移（根据屏幕安装位置调整）
     ESP_ERROR_CHECK(esp_lcd_panel_set_gap(lcd_panel_handle, 0, 0)); // 常见偏移设置
@@ -94,3 +93,18 @@ void lcd_deinit(void)
     gpio_reset_pin(LCD_BLK_NUM);
 }
 
+
+esp_err_t hardware_set_brightness(uint8_t brightness_percent) {
+    if (brightness_percent > 100) {
+        brightness_percent = 100;
+    } else if (brightness_percent < 0) {
+        brightness_percent = 0;
+    }
+
+    ESP_LOGI(TAG, "Setting LCD backlight: %d%%", brightness_percent);
+    uint32_t duty_cycle = (1023 * brightness_percent) / 100;  // 将百分比转换为占空比
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LCD_LEDC_CH, duty_cycle));
+    ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LCD_LEDC_CH));
+
+    return ESP_OK;
+}

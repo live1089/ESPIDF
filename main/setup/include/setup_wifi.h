@@ -19,7 +19,7 @@ extern EventGroupHandle_t s_wifi_event_group;
 
 
 void wifi_task(void *pvParams);
-
+bool wifi_connected();
 
 
 #endif

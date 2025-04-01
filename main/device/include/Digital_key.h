@@ -1,5 +1,6 @@
 #ifndef DIGITAL_KEY_H_
 #define DIGITAL_KEY_H_
+
 #include "driver/gpio.h"
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
@@ -14,8 +15,16 @@
 
 
 
-#define BUTTON_UP_IO_NUM  27
-#define BUTTON_DOWN_IO_NUM  26
+
+// extern button_handle_t btn_up;
+// extern button_handle_t btn_down;
+extern button_handle_t btn_left;
+extern button_handle_t btn_right;
+extern button_handle_t btn_center;
+
+
+// #define BUTTON_UP_IO_NUM  27
+// #define BUTTON_DOWN_IO_NUM  26
 #define BUTTON_LEFT_IO_NUM  25
 #define BUTTON_RIGHT_IO_NUM  33
 #define BUTTON_CENTER_IO_NUM  32
@@ -24,9 +33,7 @@
 
 
 
-void key_task();
-
-
+void gpio_key_init();
 /* 
 #define KEY_UP     GPIO_NUM_27
 #define KEY_DOWN   GPIO_NUM_26

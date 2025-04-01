@@ -17,5 +17,6 @@ extern esp_lcd_panel_handle_t      lcd_panel_handle;
 
 void device_lcd_init(void);
 void lcd_deinit(void);
+esp_err_t hardware_set_brightness(uint8_t brightness_percent);
 
 #endif

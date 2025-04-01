@@ -84,8 +84,8 @@ void setup_scr_screen_1(lv_ui *ui)
 
     //Write codes screen_1_spangroup_2
     ui->screen_1_spangroup_2 = lv_spangroup_create(ui->screen_1_tileview_1_tile_1);
-    lv_obj_set_pos(ui->screen_1_spangroup_2, 26, 24);
-    lv_obj_set_size(ui->screen_1_spangroup_2, 282, 186);
+    lv_obj_set_pos(ui->screen_1_spangroup_2, 26, 20);
+    lv_obj_set_size(ui->screen_1_spangroup_2, 282, 199);
     lv_spangroup_set_align(ui->screen_1_spangroup_2, LV_TEXT_ALIGN_LEFT);
     lv_spangroup_set_overflow(ui->screen_1_spangroup_2, LV_SPAN_OVERFLOW_CLIP);
     lv_spangroup_set_mode(ui->screen_1_spangroup_2, LV_SPAN_MODE_BREAK);
@@ -110,6 +110,41 @@ void setup_scr_screen_1(lv_ui *ui)
     lv_style_set_shadow_width(&style_screen_1_spangroup_2_main_main_default, 0);
     lv_obj_add_style(ui->screen_1_spangroup_2, &style_screen_1_spangroup_2_main_main_default, LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_spangroup_refr_mode(ui->screen_1_spangroup_2);
+
+    //Write codes screen_1_btn_1
+    ui->screen_1_btn_1 = lv_button_create(ui->screen_1);
+    lv_obj_set_pos(ui->screen_1_btn_1, 272, 11);
+    lv_obj_set_size(ui->screen_1_btn_1, 36, 21);
+    lv_obj_add_flag(ui->screen_1_btn_1, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+    ui->screen_1_btn_1_label = lv_label_create(ui->screen_1_btn_1);
+    lv_label_set_text(ui->screen_1_btn_1_label, "X");
+    lv_label_set_long_mode(ui->screen_1_btn_1_label, LV_LABEL_LONG_WRAP);
+    lv_obj_align(ui->screen_1_btn_1_label, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_pad_all(ui->screen_1_btn_1, 0, LV_STATE_DEFAULT);
+    lv_obj_set_width(ui->screen_1_btn_1_label, LV_PCT(100));
+
+    //Write style for screen_1_btn_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
+    lv_obj_set_style_bg_opa(ui->screen_1_btn_1, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(ui->screen_1_btn_1, lv_color_hex(0x000000), LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_dir(ui->screen_1_btn_1, LV_GRAD_DIR_NONE, LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(ui->screen_1_btn_1, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(ui->screen_1_btn_1, 5, LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_shadow_width(ui->screen_1_btn_1, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_text_color(ui->screen_1_btn_1, lv_color_hex(0xffffff), LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_text_font(ui->screen_1_btn_1, &lv_font_HYCuHeiJ_16, LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_text_opa(ui->screen_1_btn_1, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
+    lv_obj_set_style_text_align(ui->screen_1_btn_1, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN|LV_STATE_DEFAULT);
+
+    //Write style for screen_1_btn_1, Part: LV_PART_MAIN, State: LV_STATE_FOCUSED.
+    lv_obj_set_style_bg_opa(ui->screen_1_btn_1, 255, LV_PART_MAIN|LV_STATE_FOCUSED);
+    lv_obj_set_style_bg_color(ui->screen_1_btn_1, lv_color_hex(0xff0027), LV_PART_MAIN|LV_STATE_FOCUSED);
+    lv_obj_set_style_bg_grad_dir(ui->screen_1_btn_1, LV_GRAD_DIR_NONE, LV_PART_MAIN|LV_STATE_FOCUSED);
+    lv_obj_set_style_border_width(ui->screen_1_btn_1, 0, LV_PART_MAIN|LV_STATE_FOCUSED);
+    lv_obj_set_style_radius(ui->screen_1_btn_1, 5, LV_PART_MAIN|LV_STATE_FOCUSED);
+    lv_obj_set_style_shadow_width(ui->screen_1_btn_1, 0, LV_PART_MAIN|LV_STATE_FOCUSED);
+    lv_obj_set_style_text_color(ui->screen_1_btn_1, lv_color_hex(0xffffff), LV_PART_MAIN|LV_STATE_FOCUSED);
+    lv_obj_set_style_text_font(ui->screen_1_btn_1, &lv_font_HYCuHeiJ_16, LV_PART_MAIN|LV_STATE_FOCUSED);
+    lv_obj_set_style_text_opa(ui->screen_1_btn_1, 255, LV_PART_MAIN|LV_STATE_FOCUSED);
 
     //The custom code of screen_1.
 

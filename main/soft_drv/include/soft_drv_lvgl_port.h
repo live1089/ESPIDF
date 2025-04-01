@@ -4,7 +4,9 @@
 
 #include "esp_lvgl_port.h"
 
+extern  lv_indev_t *indev;
+
 void soft_drv_lvgl_port_init(void);
-void lvgl_deinit(void);
+void lvgl_task(void *param);
 
 #endif

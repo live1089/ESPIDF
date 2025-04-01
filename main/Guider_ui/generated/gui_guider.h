@@ -41,26 +41,80 @@ typedef struct
 	lv_span_t *screen_1_spangroup_1_span;
 	lv_obj_t *screen_1_spangroup_2;
 	lv_span_t *screen_1_spangroup_2_span;
+	lv_obj_t *screen_1_btn_1;
+	lv_obj_t *screen_1_btn_1_label;
 	lv_obj_t *screen_2;
 	bool screen_2_del;
-	lv_obj_t *screen_2_tabview_1;
-	lv_obj_t *screen_2_tabview_1_tab_1;
-	lv_obj_t *screen_2_tabview_1_tab_2;
-	lv_obj_t *screen_2_tabview_1_tab_3;
-	lv_obj_t *screen_2_label_1;
-	lv_obj_t *screen_2_label_2;
-	lv_obj_t *screen_2_label_3;
-	lv_obj_t *screen_2_label_7;
-	lv_obj_t *screen_2_label_8;
-	lv_obj_t *screen_2_label_9;
-	lv_obj_t *screen_2_label_10;
-	lv_obj_t *screen_2_led_2;
-	lv_obj_t *screen_2_led_1;
-	lv_obj_t *screen_2_label_5;
-	lv_obj_t *screen_2_label_6;
-	lv_obj_t *screen_2_sw_1;
-	lv_obj_t *screen_2_label_4;
-	lv_obj_t *screen_2_slider_1;
+	lv_obj_t *screen_2_list_1;
+	lv_obj_t *screen_2_list_1_item0;
+	lv_obj_t *screen_2_list_1_item1;
+	lv_obj_t *screen_2_list_1_item2;
+	lv_obj_t *screen_2_list_1_item3;
+	lv_obj_t *screen_3;
+	bool screen_3_del;
+	lv_obj_t *screen_3_btn_1;
+	lv_obj_t *screen_3_btn_1_label;
+	lv_obj_t *screen_3_spangroup_1;
+	lv_span_t *screen_3_spangroup_1_span;
+	lv_obj_t *screen_3_btn_2;
+	lv_obj_t *screen_3_btn_2_label;
+	lv_obj_t *screen_4;
+	bool screen_4_del;
+	lv_obj_t *screen_4_btn_1;
+	lv_obj_t *screen_4_btn_1_label;
+	lv_obj_t *screen_4_sw_1;
+	lv_obj_t *screen_4_led_1;
+	lv_obj_t *screen_4_label_1;
+	lv_obj_t *screen_4_label_2;
+	lv_obj_t *screen_4_label_3;
+	lv_obj_t *screen_5;
+	bool screen_5_del;
+	lv_obj_t *screen_5_slider_1;
+	lv_obj_t *screen_5_label_1;
+	lv_obj_t *screen_5_btn_1;
+	lv_obj_t *screen_5_btn_1_label;
+	lv_obj_t *screen_6;
+	bool screen_6_del;
+	lv_obj_t *screen_6_list_1;
+	lv_obj_t *screen_6_list_1_item0;
+	lv_obj_t *screen_6_list_1_item1;
+	lv_obj_t *screen_6_list_1_item2;
+	lv_obj_t *screen_6_list_1_item3;
+	lv_obj_t *screen_6_list_1_item4;
+	lv_obj_t *screen_7;
+	bool screen_7_del;
+	lv_obj_t *screen_7_img_1;
+	lv_obj_t *screen_7_img_2;
+	lv_obj_t *screen_7_label_1;
+	lv_obj_t *screen_7_label_2;
+	lv_obj_t *screen_7_btn_1;
+	lv_obj_t *screen_7_btn_1_label;
+	lv_obj_t *screen_7_sw_1;
+	lv_obj_t *screen_8;
+	bool screen_8_del;
+	lv_obj_t *screen_8_img_1;
+	lv_obj_t *screen_8_img_2;
+	lv_obj_t *screen_8_label_1;
+	lv_obj_t *screen_8_label_2;
+	lv_obj_t *screen_8_btn_1;
+	lv_obj_t *screen_8_btn_1_label;
+	lv_obj_t *screen_8_sw_1;
+	lv_obj_t *screen_9;
+	bool screen_9_del;
+	lv_obj_t *screen_9_btn_1;
+	lv_obj_t *screen_9_btn_1_label;
+	lv_obj_t *screen_9_img_1;
+	lv_obj_t *screen_9_label_1;
+	lv_obj_t *screen_9_sw_1;
+	lv_obj_t *screen_10;
+	bool screen_10_del;
+	lv_obj_t *screen_10_btn_1;
+	lv_obj_t *screen_10_btn_1_label;
+	lv_obj_t *screen_10_img_1;
+	lv_obj_t *screen_10_label_1;
+	lv_obj_t *screen_10_spangroup_1;
+	lv_span_t *screen_10_spangroup_1_span;
+	lv_obj_t *screen_10_sw_1;
 }lv_ui;
 
 typedef void (*ui_setup_scr_t)(lv_ui * ui);
@@ -91,13 +145,29 @@ extern lv_ui guider_ui;
 void setup_scr_screen(lv_ui *ui);
 void setup_scr_screen_1(lv_ui *ui);
 void setup_scr_screen_2(lv_ui *ui);
+void setup_scr_screen_3(lv_ui *ui);
+void setup_scr_screen_4(lv_ui *ui);
+void setup_scr_screen_5(lv_ui *ui);
+void setup_scr_screen_6(lv_ui *ui);
+void setup_scr_screen_7(lv_ui *ui);
+void setup_scr_screen_8(lv_ui *ui);
+void setup_scr_screen_9(lv_ui *ui);
+void setup_scr_screen_10(lv_ui *ui);
+LV_IMAGE_DECLARE(_3_RGB565_47x44);
+LV_IMAGE_DECLARE(_2_RGB565_47x44);
+LV_IMAGE_DECLARE(_5_RGB565_47x44);
+LV_IMAGE_DECLARE(_4_RGB565_47x44);
+LV_IMAGE_DECLARE(_6_RGB565_47x44);
+LV_IMAGE_DECLARE(_7_RGB565_47x44);
 
 LV_FONT_DECLARE(lv_font_HYCuHeiJ_16)
 LV_FONT_DECLARE(lv_font_HYCuHeiJ_12)
 LV_FONT_DECLARE(lv_font_HYCuHeiJ_10)
 LV_FONT_DECLARE(lv_font_HYBaoSongJ_12)
 LV_FONT_DECLARE(lv_font_HYBaoSongJ_13)
+LV_FONT_DECLARE(lv_font_HYZiKuTangYiShanKaiW_19)
 LV_FONT_DECLARE(lv_font_HYCuHeiJ_14)
+LV_FONT_DECLARE(lv_font_montserratMedium_15)
 
 
 #ifdef __cplusplus

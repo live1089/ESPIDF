@@ -105,7 +105,7 @@ lv_indev_t *lvgl_port_add_navigation_buttons(const lvgl_port_nav_btns_cfg_t *but
     lv_indev_set_read_cb(indev, lvgl_port_navigation_buttons_read);
     lv_indev_set_disp(indev, buttons_cfg->disp);
     lv_indev_set_driver_data(indev, buttons_ctx);
-    //buttons_ctx->indev->long_press_repeat_time = 300;
+    // buttons_ctx->indev->long_press_repeat_time = 300;
     buttons_ctx->indev = indev;
     lvgl_port_unlock();
 
@@ -151,13 +151,18 @@ esp_err_t lvgl_port_remove_navigation_buttons(lv_indev_t *buttons)
 
 static void lvgl_port_navigation_buttons_read(lv_indev_t *indev_drv, lv_indev_data_t *data)
 {
+    // ESP_LOGI(TAG, "Navigation buttons read callback triggered.");
     static uint32_t last_key = 0;
 
     assert(indev_drv);
     lvgl_port_nav_btns_ctx_t *ctx = (lvgl_port_nav_btns_ctx_t *)lv_indev_get_driver_data(indev_drv);
+        if (ctx == NULL) {
+        ESP_LOGE(TAG, "Driver data is NULL!");
+        return;
+    }
     assert(ctx);
 
-    /* Buttons */
+   /* Buttons */
     if (ctx->btn_prev) {
         data->key = LV_KEY_LEFT;
         last_key = LV_KEY_LEFT;
@@ -174,7 +179,8 @@ static void lvgl_port_navigation_buttons_read(lv_indev_t *indev_drv, lv_indev_da
         data->key = last_key;
         data->state = LV_INDEV_STATE_RELEASED;
     }
-}
+} 
+
 
 static void lvgl_port_btn_down_handler(void *arg, void *arg2)
 {
@@ -184,15 +190,21 @@ static void lvgl_port_btn_down_handler(void *arg, void *arg2)
         /* PREV */
         if (button == ctx->btn[LVGL_PORT_NAV_BTN_PREV]) {
             ctx->btn_prev = true;
+        //    ESP_LOGI(TAG, "Button PREV pressed"); 
         }
+        
         /* NEXT */
         if (button == ctx->btn[LVGL_PORT_NAV_BTN_NEXT]) {
             ctx->btn_next = true;
+            // ESP_LOGI(TAG, "Button NEXT pressed");
         }
+        
         /* ENTER */
         if (button == ctx->btn[LVGL_PORT_NAV_BTN_ENTER]) {
             ctx->btn_enter = true;
+            // ESP_LOGI(TAG, "Button ENTER pressed");
         }
+        
     }
 
     /* Wake LVGL task, if needed */
@@ -207,15 +219,21 @@ static void lvgl_port_btn_up_handler(void *arg, void *arg2)
         /* PREV */
         if (button == ctx->btn[LVGL_PORT_NAV_BTN_PREV]) {
             ctx->btn_prev = false;
+            // ESP_LOGI(TAG, "Button PREV released");
         }
+        
         /* NEXT */
         if (button == ctx->btn[LVGL_PORT_NAV_BTN_NEXT]) {
             ctx->btn_next = false;
+            // ESP_LOGI(TAG, "Button NEXT released");
         }
+        
         /* ENTER */
         if (button == ctx->btn[LVGL_PORT_NAV_BTN_ENTER]) {
             ctx->btn_enter = false;
+            // ESP_LOGI(TAG, "Button ENTER released");
         }
+        
     }
 
     /* Wake LVGL task, if needed */

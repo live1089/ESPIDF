@@ -13,15 +13,16 @@
  *********************/
 #include <stdio.h>
 #include "lvgl.h"
-#include "custom.h"
+#include "../Guider_ui/custom/custom.h"
 
 /*********************
  *      DEFINES
  *********************/
-#include "Digital_key.h"
-#include "Guider_ui/custom/custom.h"
-#include "Guider_ui/generated/gui_guider.h"
-
+#include "soft_drv_lvgl_port.h"
+#include "../generated/gui_guider.h"
+#include "esp_log.h"
+#include "device_lcd.h"
+#include "setup_wifi.h"
 /**********************
  *      TYPEDEFS
  **********************/
@@ -34,26 +35,62 @@
  *  STATIC VARIABLES
  **********************/
 
-/**
- * Create a demo application
- */
+
+
 
 void custom_handle_brightness(uint8_t value) {  
-    // 1. 业务逻辑：设置亮度（对接硬件或模拟）  
-    // 假设这里调用硬件接口：hardware_set_brightness(value);  
-    // direction_t dir = debounce_detect();
 
-    // 2. 界面更新（示例）  
-    lv_label_set_text_fmt(guider_ui.screen_2_label_4, "%d", value);
+    hardware_set_brightness(value);  
+    // 2. 界面更新  
+    lv_label_set_text_fmt(guider_ui.screen_4_label_1, "%d", value);
     
     
 }
+static const char *TAG = "custom";
+lv_group_t* group;
+
+void setup_focus_navigation(lv_ui *ui) {
+    // 创建一个组
+    group = lv_group_create();
+    lv_indev_set_group(indev, group);
+    lv_group_set_default(group);
+
+    lv_group_t* indev_group = lv_indev_get_group(indev);
+    if (indev_group == group) {
+        ESP_LOGI(TAG, "Input device is associated with the group.");
+    } else {
+        ESP_LOGE(TAG, "Input device is NOT associated with the group!");
+    }
+
+    if (ui->screen_btn_1) lv_group_add_obj(group, ui->screen_btn_1);
+    if (ui->screen_btn_2) lv_group_add_obj(group, ui->screen_btn_2);
+    if (ui->screen_btn_3) lv_group_add_obj(group, ui->screen_btn_3);
+    lv_group_focus_obj(ui->screen_btn_2);  // 设置默认焦点
+
+}
+
+
+
+
+void update_net_status(lv_obj_t *net_label) {
+    bool connected = wifi_connected();
+    if (connected) {
+        // 如果有网，显示label
+        lv_obj_clear_flag(guider_ui.screen_label_1, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(guider_ui.screen_label_1, "" LV_SYMBOL_WIFI " ");
+        lv_led_on(guider_ui.screen_4_led_1);
+    } else {
+        // 如果没网，隐藏label
+        lv_obj_add_flag(guider_ui.screen_label_1, LV_OBJ_FLAG_HIDDEN);
+        lv_led_off(guider_ui.screen_4_led_1);
+    }
+}
+
+
 
 
 void custom_init(lv_ui *ui)
 {
-    /* Add your codes here */
-    
-
+    if (ui == NULL) return;  // 添加检查
+    setup_focus_navigation(ui);
 }
-
