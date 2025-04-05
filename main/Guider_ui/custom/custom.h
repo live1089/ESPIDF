@@ -14,10 +14,18 @@ extern "C" {
 #endif
 
 #include "../Guider_ui/generated/gui_guider.h"
+#include "weather.h"
 
 void custom_init(lv_ui *ui);
 void custom_handle_brightness(uint8_t value);  // 声明业务函数
-void update_memory_display();
+void forecast_weather();
+void realtime_weather();
+void realtime(RealTimeWeather *ctx);
+void forecast(CityWeather *f);
+
+
+
+
 
 #ifdef __cplusplus
 }

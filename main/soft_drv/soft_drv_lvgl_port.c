@@ -8,6 +8,7 @@
 
 #include "Digital_key.h"
 #include "lv_ui.h"
+#include "event_bits.h"
 
 static const char *TAG = "LVGL_INTT";
 
@@ -24,8 +25,6 @@ lv_indev_t *indev;
 
 void soft_drv_lvgl_port_init(void)
 {
-    
-    
     ESP_ERROR_CHECK(gpio_set_level(LCD_BLK_NUM,LCD_BL_NO_LEVEL));
 
     lvgl_port_cfg_t lvgl_cfg = {
@@ -69,7 +68,6 @@ lvgl_port_display_cfg_t disp_cfg = {
     return;
 }
     lvgl_port_nav_btns_cfg_t btn_cfg = {
-        
         .disp = lvgl_disp,
         .button_prev = btn_left,
         .button_next = btn_right,
@@ -84,12 +82,11 @@ lvgl_port_display_cfg_t disp_cfg = {
     } else {
         ESP_LOGI(TAG, "Input device created successfully: %p", indev);
     }
-
 }
 
 
 // 创建一个任务来处理 LVGL 事件
-void lvgl_task(void *param)
+void lvgl_event_task(void *param)
 {
     while (1)
     {

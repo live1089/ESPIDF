@@ -12,6 +12,8 @@
 #include "lvgl.h"
 #include "esp_system.h"
 #include "esp_log.h"
+#include "esp_lvgl_port.h"
+#include "custom/custom.h"
 
 #if LV_USE_GUIDER_SIMULATOR && LV_USE_FREEMASTER
 #include "freemaster_client.h"
@@ -63,9 +65,11 @@ static void screen_btn_3_event_handler (lv_event_t *e)
 
 void events_init_screen (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_btn_1, screen_btn_1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_btn_2, screen_btn_2_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_btn_3, screen_btn_3_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_btn_1, screen_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_btn_2, screen_btn_2_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_btn_3, screen_btn_3_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_1_btn_1_event_handler (lv_event_t *e)
@@ -74,7 +78,28 @@ static void screen_1_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_1_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, false, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_1_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+static void screen_1_sw_1_event_handler (lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    switch (code) {
+    case LV_EVENT_PRESSED:
+    {
+        lv_obj_t * status_obj = lv_event_get_target(e);
+        int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
+        if (status)
+        {
+            forecast_weather();
+        }else{
+            realtime_weather();
+        }
         break;
     }
     default:
@@ -84,7 +109,10 @@ static void screen_1_btn_1_event_handler (lv_event_t *e)
 
 void events_init_screen_1 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_1_btn_1, screen_1_btn_1_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_1_btn_1, screen_1_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_1_sw_1, screen_1_sw_1_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_2_list_1_item0_event_handler (lv_event_t *e)
@@ -145,10 +173,12 @@ static void screen_2_list_1_item3_event_handler (lv_event_t *e)
 
 void events_init_screen_2 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_2_list_1_item0, screen_2_list_1_item0_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_2_list_1_item1, screen_2_list_1_item1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_2_list_1_item2, screen_2_list_1_item2_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_2_list_1_item3, screen_2_list_1_item3_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_2_list_1_item0, screen_2_list_1_item0_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_2_list_1_item1, screen_2_list_1_item1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_2_list_1_item2, screen_2_list_1_item2_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_2_list_1_item3, screen_2_list_1_item3_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_3_btn_1_event_handler (lv_event_t *e)
@@ -181,8 +211,10 @@ static void screen_3_btn_2_event_handler (lv_event_t *e)
 
 void events_init_screen_3 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_3_btn_1, screen_3_btn_1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_3_btn_2, screen_3_btn_2_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_3_btn_1, screen_3_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_3_btn_2, screen_3_btn_2_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_4_btn_1_event_handler (lv_event_t *e)
@@ -201,10 +233,12 @@ static void screen_4_btn_1_event_handler (lv_event_t *e)
 
 void events_init_screen_4 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_4_btn_1, screen_4_btn_1_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_4_btn_1, screen_4_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
-static void screen_5_event_handler (lv_event_t *e)
+static void screen_5_slider_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
@@ -224,7 +258,7 @@ static void screen_5_btn_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_5_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, false, true);
+        ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_5_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
     default:
@@ -234,8 +268,10 @@ static void screen_5_btn_1_event_handler (lv_event_t *e)
 
 void events_init_screen_5 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_5, screen_5_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_5_btn_1, screen_5_btn_1_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_5, screen_5_slider_1_event_handler, LV_EVENT_VALUE_CHANGED, ui);
+    lv_obj_add_event_cb(ui->screen_5_btn_1, screen_5_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_6_list_1_item0_event_handler (lv_event_t *e)
@@ -310,11 +346,13 @@ static void screen_6_list_1_item4_event_handler (lv_event_t *e)
 
 void events_init_screen_6 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_6_list_1_item0, screen_6_list_1_item0_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_6_list_1_item1, screen_6_list_1_item1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_6_list_1_item2, screen_6_list_1_item2_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_6_list_1_item3, screen_6_list_1_item3_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_6_list_1_item4, screen_6_list_1_item4_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_6_list_1_item0, screen_6_list_1_item0_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_6_list_1_item1, screen_6_list_1_item1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_6_list_1_item2, screen_6_list_1_item2_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_6_list_1_item3, screen_6_list_1_item3_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_6_list_1_item4, screen_6_list_1_item4_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_7_btn_1_event_handler (lv_event_t *e)
@@ -349,8 +387,10 @@ static void screen_7_sw_1_event_handler (lv_event_t *e)
 
 void events_init_screen_7 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_7_btn_1, screen_7_btn_1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_7_sw_1, screen_7_sw_1_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_7_btn_1, screen_7_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_7_sw_1, screen_7_sw_1_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_8_btn_1_event_handler (lv_event_t *e)
@@ -385,8 +425,10 @@ static void screen_8_sw_1_event_handler (lv_event_t *e)
 
 void events_init_screen_8 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_8_btn_1, screen_8_btn_1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_8_sw_1, screen_8_sw_1_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_8_btn_1, screen_8_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_8_sw_1, screen_8_sw_1_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_9_btn_1_event_handler (lv_event_t *e)
@@ -421,8 +463,10 @@ static void screen_9_sw_1_event_handler (lv_event_t *e)
 
 void events_init_screen_9 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_9_btn_1, screen_9_btn_1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_9_sw_1, screen_9_sw_1_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_9_btn_1, screen_9_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_9_sw_1, screen_9_sw_1_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 static void screen_10_btn_1_event_handler (lv_event_t *e)
@@ -457,8 +501,10 @@ static void screen_10_sw_1_event_handler (lv_event_t *e)
 
 void events_init_screen_10 (lv_ui *ui)
 {
-    lv_obj_add_event_cb(ui->screen_10_btn_1, screen_10_btn_1_event_handler, LV_EVENT_ALL, ui);
-    lv_obj_add_event_cb(ui->screen_10_sw_1, screen_10_sw_1_event_handler, LV_EVENT_ALL, ui);
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_10_btn_1, screen_10_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_10_sw_1, screen_10_sw_1_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
 }
 
 

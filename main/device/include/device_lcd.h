@@ -8,6 +8,7 @@
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lvgl_port.h"
+#include "event_bits.h"
 
 
 
@@ -17,6 +18,7 @@ extern esp_lcd_panel_handle_t      lcd_panel_handle;
 
 void device_lcd_init(void);
 void lcd_deinit(void);
-esp_err_t hardware_set_brightness(uint8_t brightness_percent);
+esp_err_t hardware_set_brightness(uint16_t brightness_percent);
 
+void ui_task(void *param);
 #endif

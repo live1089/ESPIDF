@@ -27,7 +27,7 @@ idf_component_register(
         # "./device/Digital_key.c"
         "./soft_drv/soft_drv_lvgl_port.c"
         "./lv_ui/lv_ui.c"
-        "./Guider_ui/custom/custom.c"
+        # "./Guider_ui/custom/custom.c"
         ${GENERATED_SRCS}  # 自动包含所有生成的.c文件
         
 
@@ -37,6 +37,6 @@ idf_component_register(
         "./device/include"
         "./soft_drv/include"
         "./lv_ui/include"
-        "./Guider_ui/custom"
+        # "./Guider_ui/custom"
         ${GENERATED_DIR} # 核心！包含生成文件的根目录
 )

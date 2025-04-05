@@ -47,6 +47,7 @@ void ui_init_style(lv_style_t * style)
 void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, bool * old_scr_del, ui_setup_scr_t setup_scr,
                            lv_screen_load_anim_t anim_type, uint32_t time, uint32_t delay, bool is_clean, bool auto_del)
 {
+    vTaskDelay(pdMS_TO_TICKS(100));
     lvgl_port_lock(0);
     lv_obj_t * act_scr = lv_screen_active();
     lv_group_t *group = lv_obj_get_group(act_scr);
@@ -57,8 +58,9 @@ void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, boo
         gg_edata_task_clear(act_scr);
     }
 #endif
-    if (auto_del && is_clean) {
+    if (auto_del && is_clean && lv_obj_is_valid(act_scr)) {
         lv_obj_remove_event_cb(act_scr, NULL);
+        ESP_LOGI("uI", "Cleaning old screen: %p", act_scr);
         lv_obj_clean(act_scr);
     }
     if (new_scr_del && !lv_obj_is_valid(*new_scr)) {
@@ -66,7 +68,10 @@ void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, boo
     }
 
     *old_scr_del = auto_del;
-        if (lv_obj_is_valid(*new_scr)) {
+    if (lv_obj_is_valid(*new_scr)) {
+        time = (anim_type != LV_SCR_LOAD_ANIM_NONE) ? time : 0;
+        delay = (anim_type != LV_SCR_LOAD_ANIM_NONE) ? delay : 0;
+        ESP_LOGI("UI", "Loading screen %p with anim %d", *new_scr, anim_type);
         lv_screen_load_anim(*new_scr, anim_type, time, delay, auto_del);
     } else {
         ESP_LOGE("UI", "New screen is invalid!");
@@ -75,7 +80,7 @@ void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, boo
     if (auto_del && lv_obj_is_valid(act_scr)) {
         if (group)
         {
-            lv_group_remove_all_objs(act_scr);
+            lv_group_remove_all_objs(group);
         }
         lv_obj_delete(act_scr); // 显式删除旧页面
         act_scr = NULL;      // 指针置空
@@ -88,6 +93,7 @@ void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, boo
             if (group) {
                 lv_group_set_editing(group, false);  // 退出编辑模式
                 lv_group_focus_obj(NULL);            // 清空焦点
+                ESP_LOGI("UI", "Reset focus for group %p", group);
             }
         }
         indev = lv_indev_get_next(indev);
@@ -146,11 +152,13 @@ void setup_bottom_layer(void)
 
 void setup_ui(lv_ui *ui)
 {
+    lvgl_port_lock(0);
     setup_bottom_layer();
     init_scr_del_flag(ui);
     init_keyboard(ui);
     setup_scr_screen(ui);
     lv_screen_load(ui->screen);
+    lvgl_port_unlock();
 }
 
 void video_play(lv_ui *ui)

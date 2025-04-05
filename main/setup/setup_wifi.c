@@ -1,12 +1,11 @@
 #include "setup_wifi.h"
 #include <string.h>
 
-static const char *TAG = "wifi";
-// 定义事件组和连接状态标志位
-EventGroupHandle_t s_wifi_event_group;
 
-#define WIFI_CONNECTED_BIT BIT0 // 连接成功标志
-#define WIFI_FAIL_BIT BIT1      // 连接失败标志
+static const char *TAG = "wifi";
+
+// 定义事件组和连接状态标志位
+EventGroupHandle_t net_events;   // 网络模块事件
 
 #define WIFI_MAXIMUM_RETRY 5    // WIFI最大连接次数
 uint8_t s_retry_num = 0;
@@ -74,7 +73,7 @@ static void wifi_event_handle(void *event_handler_arg, esp_event_base_t event_ba
             }
             else
             {
-                xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+                xEventGroupSetBits(net_events, WIFI_FAIL_BIT);
                 ESP_LOGE(TAG, "Maximum retries reache");
                 esp_restart(); // 达到最大重试后重启设备
             }
@@ -88,7 +87,7 @@ static void wifi_event_handle(void *event_handler_arg, esp_event_base_t event_ba
         ESP_LOGI(TAG, "Got IP: " IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
         // 设置连接成功标志
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        xEventGroupSetBits(net_events, WIFI_CONNECTED_BIT);
     }
 }
 
@@ -101,8 +100,15 @@ esp_err_t wifi_init_sta(const char *ssid, const char *password)
         return ESP_OK;
     initialized = true;
 
+    /*创建WiFi事件组,用于同步WiFi连接状态*/
+    net_events = xEventGroupCreate();
+
+
     /*初始化网络接口层(TCP/IP协议栈)*/
     ESP_ERROR_CHECK(esp_netif_init());
+
+    /* 创建默认事件循环,用于处理系统事件 */
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     /* 创建默认的station模式网络接口 */
     esp_netif_t *netif = esp_netif_create_default_wifi_sta();
@@ -112,8 +118,7 @@ esp_err_t wifi_init_sta(const char *ssid, const char *password)
         return ESP_OK;
     }
 
-    /* 创建默认事件循环,用于处理系统事件 */
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
 
     // Wi-Fi 配置
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
@@ -191,9 +196,6 @@ void wifi_task(void *pvParams)
     const char *ssid = wifi_ssid;
     const char *password = wifi_password;
 
-    /*创建WiFi事件组,用于同步WiFi连接状态*/
-    s_wifi_event_group = xEventGroupCreate();
-
     // 初始化 NVS
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -212,7 +214,7 @@ void wifi_task(void *pvParams)
     // 主循环处理连接状态
     while (1)
     {
-        EventBits_t bits = xEventGroupWaitBits(s_wifi_event_group,
+        EventBits_t bits = xEventGroupWaitBits(net_events,
                                                WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
                                                pdFALSE, pdFALSE, portMAX_DELAY);
 
@@ -222,10 +224,10 @@ void wifi_task(void *pvParams)
             ESP_LOGI(TAG, "Connected to AP");
 
             // 触发其他任务（例如启动 HTTP 客户端）
-            xEventGroupSetBits(s_wifi_event_group, NETWORK_READY_BIT);
+            xEventGroupSetBits(net_events, SYS_EVENT_WIFI_READY);
 
             // 清除事件标志
-            xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+            xEventGroupClearBits(net_events, WIFI_CONNECTED_BIT);
         }
 
         // 连接失败
@@ -234,7 +236,7 @@ void wifi_task(void *pvParams)
             ESP_LOGW(TAG, "Wait for 5 seconds and try again...");
             vTaskDelay(5000 / portTICK_PERIOD_MS);  // 等待 5 秒
             esp_wifi_connect();
-            xEventGroupClearBits(s_wifi_event_group, WIFI_FAIL_BIT);
+            xEventGroupClearBits(net_events, WIFI_FAIL_BIT);
         }
 
         vTaskDelay(pdMS_TO_TICKS(100)); // 防止 CPU 占用过高
@@ -243,6 +245,6 @@ void wifi_task(void *pvParams)
     // 任务退出前清理
     esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_event_handle);
     esp_event_handler_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, wifi_event_handle);
-    vEventGroupDelete(s_wifi_event_group);
+    vEventGroupDelete(net_events);
     vTaskDelete(NULL);
 }

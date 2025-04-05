@@ -14,6 +14,7 @@ extern "C" {
 #endif
 
 #include "lvgl.h"
+#include "esp_lvgl_port.h"
 
 
 typedef struct
@@ -36,13 +37,12 @@ typedef struct
 	bool screen_1_del;
 	lv_obj_t *screen_1_tileview_1;
 	lv_obj_t *screen_1_tileview_1_tile;
-	lv_obj_t *screen_1_tileview_1_tile_1;
 	lv_obj_t *screen_1_spangroup_1;
 	lv_span_t *screen_1_spangroup_1_span;
-	lv_obj_t *screen_1_spangroup_2;
-	lv_span_t *screen_1_spangroup_2_span;
 	lv_obj_t *screen_1_btn_1;
 	lv_obj_t *screen_1_btn_1_label;
+	lv_obj_t *screen_1_btn_2_label;
+	lv_obj_t *screen_1_sw_1;
 	lv_obj_t *screen_2;
 	bool screen_2_del;
 	lv_obj_t *screen_2_list_1;

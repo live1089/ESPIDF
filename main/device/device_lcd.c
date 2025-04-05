@@ -1,8 +1,10 @@
 #include "device_lcd.h"
 #include "lvgl.h"
+#include "soft_drv_lvgl_port.h"
 // #include "esp_lcd_touch_xpt2046.h"
 // #include "esp_lcd_touch.h"
 #include "esp_log.h"
+
 /*
 esp_lcd_panel_reset()
 硬件/软件复位屏幕
@@ -40,7 +42,10 @@ static const char *TAG = "device_lcd";
 
 
 void device_lcd_init(void)
-{   //初始化spi
+{   
+    
+
+    //初始化spi
      const spi_bus_config_t buscfg = ILI9341_PANEL_BUS_SPI_CONFIG(LCD_SCLK_NUM,
                                                                 LCD_MOSI_NUM,
                                                                 LCD_H_RES_DATA * LCD_BUFFER_H_DATA * sizeof(uint16_t));//配置SPI引脚
@@ -80,9 +85,8 @@ void device_lcd_init(void)
 
     // 8. 开启显示
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(lcd_panel_handle, true));
-
-
 }
+
 
 
 void lcd_deinit(void)
@@ -94,10 +98,10 @@ void lcd_deinit(void)
 }
 
 
-esp_err_t hardware_set_brightness(uint8_t brightness_percent) {
-    if (brightness_percent > 100) {
+esp_err_t hardware_set_brightness(uint16_t brightness_percent) {
+    if (brightness_percent >= 100) {
         brightness_percent = 100;
-    } else if (brightness_percent < 0) {
+    } else if (brightness_percent <= 0) {
         brightness_percent = 0;
     }
 
@@ -108,3 +112,8 @@ esp_err_t hardware_set_brightness(uint8_t brightness_percent) {
 
     return ESP_OK;
 }
+
+
+
+
+

@@ -7,6 +7,6 @@
 extern  lv_indev_t *indev;
 
 void soft_drv_lvgl_port_init(void);
-void lvgl_task(void *param);
+void lvgl_event_task(void *param);
 
 #endif

@@ -12,7 +12,7 @@
 #include "gui_guider.h"
 #include "events_init.h"
 #include "widgets_init.h"
-#include "custom.h"
+#include "..\Guider_ui\custom\custom.h"
 
 
 
@@ -169,7 +169,9 @@ void setup_scr_screen_4(lv_ui *ui)
 
 
     //Update current screen layout.
+    lvgl_port_lock(0);
     lv_obj_update_layout(ui->screen_4);
+    lvgl_port_unlock();
 
     //Init events for screen.
     events_init_screen_4(ui);
