@@ -3,6 +3,7 @@
 
 set(GENERATED_DIR "${COMPONENT_DIR}/Guider_ui")
 set(DEVICE_DIR "${COMPONENT_DIR}/device")
+set(SETUP_DIR "${COMPONENT_DIR}/setup")
 
 # 递归收集所有子目录的.c文件（关键！）
 file(
@@ -10,6 +11,7 @@ file(
     LIST_DIRECTORIES false  # 不包含目录
     "${GENERATED_DIR}/*.c"  # 通配符匹配所有子目录
     "${DEVICE_DIR}/*.c"
+    "${SETUP_DIR}/*.c"
 )
 
 # 注册组件
@@ -19,10 +21,10 @@ idf_component_register(
 
     SRCS 
         "main.c"
-        "./setup/setup_gpio.c"
-        "./setup/setup_spi.c"
-        "./setup/setup_uart.c"
-        "./setup/setup_wifi.c"
+        # "./setup/setup_gpio.c"
+        # "./setup/setup_spi.c"
+        # "./setup/setup_uart.c"
+        # "./setup/setup_wifi.c"
         # "./device/device_lcd.c"
         # "./device/Digital_key.c"
         "./soft_drv/soft_drv_lvgl_port.c"

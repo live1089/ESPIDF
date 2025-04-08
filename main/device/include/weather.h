@@ -34,6 +34,8 @@ typedef struct {
 } CityWeather;
 
 
+extern RealTimeWeather parsed_weather_data;
+extern CityWeather forecast_weather_data;
 
 void weather_task(void *pvParams);
 

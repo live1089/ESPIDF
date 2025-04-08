@@ -14,12 +14,13 @@
 #include "esp_log.h"
 #include "esp_lvgl_port.h"
 #include "custom/custom.h"
+#include "device_lcd.h"
 
 #if LV_USE_GUIDER_SIMULATOR && LV_USE_FREEMASTER
 #include "freemaster_client.h"
 #endif
 
-
+static const char *TAG = "events";
 static void screen_btn_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -94,11 +95,12 @@ static void screen_1_sw_1_event_handler (lv_event_t *e)
     {
         lv_obj_t * status_obj = lv_event_get_target(e);
         int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
+        bool sec = status;
         if (status)
         {
-            forecast_weather();
-        }else{
             realtime_weather();
+        }else{
+            forecast_weather();
         }
         break;
     }
@@ -222,7 +224,7 @@ static void screen_4_btn_1_event_handler (lv_event_t *e)
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
-    {
+    {   ESP_LOGI(TAG,"加载屏幕：");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_4_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
@@ -244,7 +246,14 @@ static void screen_5_slider_1_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_VALUE_CHANGED:
     {
-
+        lvgl_port_lock(0);  
+        uint16_t value = lv_slider_get_value(lv_event_get_target(e));
+        if (lv_obj_is_valid(guider_ui.screen_5_label_1))
+        {
+            lv_label_set_text_fmt(guider_ui.screen_5_label_1, "%d", value);
+        }
+        lvgl_port_unlock();
+        hardware_set_brightness(value);
         break;
     }
     default:

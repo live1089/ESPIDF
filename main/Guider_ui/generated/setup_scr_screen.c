@@ -17,10 +17,8 @@
 
 
 
-int screen_digital_clock_1_min_value = 24;
-int screen_digital_clock_1_hour_value = 10;
-int screen_digital_clock_1_sec_value = 57;
 char screen_digital_clock_1_meridiem[] = "AM";
+lv_timer_t *clock_timer;
 void setup_scr_screen(lv_ui *ui)
 {
     //Write codes screen
@@ -210,10 +208,8 @@ void setup_scr_screen(lv_ui *ui)
     ui->screen_datetext_1 = lv_label_create(ui->screen);
     lv_obj_set_pos(ui->screen_datetext_1, 94, 43);
     lv_obj_set_size(ui->screen_datetext_1, 130, 36);
-    lv_label_set_text(ui->screen_datetext_1, "2025/03/21");
+    lv_label_set_text(ui->screen_datetext_1, "----/--/--");
     lv_obj_set_style_text_align(ui->screen_datetext_1, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_add_flag(ui->screen_datetext_1, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(ui->screen_datetext_1, screen_datetext_1_event_handler, LV_EVENT_ALL, NULL);
 
     //Write style for screen_datetext_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
     lv_obj_set_style_text_color(ui->screen_datetext_1, lv_color_hex(0xffffff), LV_PART_MAIN|LV_STATE_DEFAULT);
@@ -232,13 +228,14 @@ void setup_scr_screen(lv_ui *ui)
     lv_obj_set_style_shadow_width(ui->screen_datetext_1, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
 
     //Write codes screen_digital_clock_1
-    static bool screen_digital_clock_1_timer_enabled = false;
+    screen_digital_clock_1_timer_enabled = false;
     ui->screen_digital_clock_1 = lv_label_create(ui->screen);
     lv_obj_set_pos(ui->screen_digital_clock_1, 114, 79);
     lv_obj_set_size(ui->screen_digital_clock_1, 96, 21);
-    lv_label_set_text(ui->screen_digital_clock_1, "10:24:57 AM");
+    lv_label_set_text(ui->screen_digital_clock_1, "--:--:-- --");
     if (!screen_digital_clock_1_timer_enabled) {
-        lv_timer_create(screen_digital_clock_1_timer, 1000, NULL);
+        ESP_LOGI("screen","启动LVGL时间定时器");
+        clock_timer = lv_timer_create(screen_digital_clock_1_timer, 1000, NULL);
         screen_digital_clock_1_timer_enabled = true;
     }
 

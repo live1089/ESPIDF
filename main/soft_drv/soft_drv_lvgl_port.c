@@ -49,8 +49,8 @@ lvgl_port_display_cfg_t disp_cfg = {
 #endif
     .rotation = {
         .swap_xy = false,           // 不交换 X/Y 轴
-        .mirror_x = false,          // 不水平镜像
-        .mirror_y = true            // 垂直镜像（适配屏幕物理方向）
+        .mirror_x = true,          // 不水平镜像
+        .mirror_y = false            // 垂直镜像（适配屏幕物理方向）
     },
     .flags = {
         .buff_dma = true,           // 启用 DMA 传输缓冲区

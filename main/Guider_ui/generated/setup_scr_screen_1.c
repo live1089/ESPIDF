@@ -65,7 +65,7 @@ void setup_scr_screen_1(lv_ui *ui)
     lv_span_set_text(ui->screen_1_spangroup_1_span, "                   实时天气\n\n---------------------------------\n\n城市/区：\n\n天气：        温度：℃\n\n风向：\n\n风力： 级\n\n空气湿度：\n\n发布时间：");
     lv_style_set_text_color(lv_span_get_style(ui->screen_1_spangroup_1_span), lv_color_hex(0xffffff));
     lv_style_set_text_decor(lv_span_get_style(ui->screen_1_spangroup_1_span), LV_TEXT_DECOR_NONE);
-    lv_style_set_text_font(lv_span_get_style(ui->screen_1_spangroup_1_span), &lv_font_HYBaoSongJ_13);
+    lv_style_set_text_font(lv_span_get_style(ui->screen_1_spangroup_1_span), &lv_font_HYBaoSongJ_12);
 
     //Write style state: LV_STATE_DEFAULT for &style_screen_1_spangroup_1_main_main_default
     static lv_style_t style_screen_1_spangroup_1_main_main_default;

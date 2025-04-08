@@ -1,14 +1,14 @@
 #include "setup_wifi.h"
 #include <string.h>
-
+#include "setup_nvs.h"
 
 static const char *TAG = "wifi";
 
 // 定义事件组和连接状态标志位
 EventGroupHandle_t net_events;   // 网络模块事件
 
-#define WIFI_MAXIMUM_RETRY 5    // WIFI最大连接次数
-uint8_t s_retry_num = 0;
+#define WIFI_MAXIMUM_RETRY   10  // WIFI最大连接次数
+uint8_t s_retry_num = 0; //s_retry_num 为 n 时，delay_ms = (1 << n) * 1000 = 2^n * 1000 毫秒，即 2 n秒
 
 #if 1
 /* Wi-Fi 连接状态检查 */
@@ -196,14 +196,7 @@ void wifi_task(void *pvParams)
     const char *ssid = wifi_ssid;
     const char *password = wifi_password;
 
-    // 初始化 NVS
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(ret);
+    nvs_init();
 
     // 初始化 Wi-Fi
     wifi_init_sta(ssid, password);
@@ -223,8 +216,9 @@ void wifi_task(void *pvParams)
         {
             ESP_LOGI(TAG, "Connected to AP");
 
-            // 触发其他任务（例如启动 HTTP 客户端）
+            // 触发其他任务
             xEventGroupSetBits(net_events, SYS_EVENT_WIFI_READY);
+            xEventGroupSetBits(net_events,Notice_nvs);
 
             // 清除事件标志
             xEventGroupClearBits(net_events, WIFI_CONNECTED_BIT);

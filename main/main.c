@@ -19,7 +19,7 @@
 #include "Digital_key.h"
 #include "..\Guider_ui\generated\events_init.h"
 #include "Guider_ui/custom/custom.h"
-
+#include "setup_rtc.h"
 
 lv_ui guider_ui; 
 /*
@@ -42,7 +42,7 @@ void stack_monitor(void *pvParameters) {
         ESP_LOGI("STACK", "Free Stack: %u bytes", 
                 (uxTaskGetStackHighWaterMark(*task_handle)*4));
         ESP_LOGI("LVGL_MEM", "Used: %d, Frag: %d%%", mon.total_size - mon.free_size, mon.frag_pct);
-        
+        sys_run_time();
         vTaskDelay(pdMS_TO_TICKS(3000));
     }
 }
@@ -76,10 +76,13 @@ void app_main(void)
     // 启动 Wi-Fi 任务（优先级高于HTTP任务）
     xTaskCreatePinnedToCore(wifi_task, "wifi_task", 4096, NULL, 4, NULL,0);
     xTaskCreatePinnedToCore(weather_task,"weather_task",4096,NULL,3,NULL,0);
-    
 
+    BaseType_t result = xTaskCreatePinnedToCore(periodic_sync_task, "periodic_sync", 2048, NULL, 4, NULL,0);
+    if (result != pdPASS) {
+        ESP_LOGE("main", "任务创建失败，错误码：%d", result);
+    }
     // 创建低优先级监控任务
-    xTaskCreatePinnedToCore(stack_monitor, "stack_mon", 2048, &lvgl_stack_handle, 1, NULL,0);
+    // xTaskCreatePinnedToCore(stack_monitor, "stack_mon", 2048, &lvgl_stack_handle, 1, NULL,0);
   
     // 6. 主循环
     for(;;) {

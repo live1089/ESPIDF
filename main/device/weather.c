@@ -2,32 +2,12 @@
 #include "setup_wifi.h"
 #include "cJSON.h"
 #include <string.h>
-/*
-[开始任务]
-  |
-  v
-等待WiFi连接 --超时--> [任务退出]
-  |
-  v
-初始化HTTP客户端 --失败--> 重试(MAX_RETRY)
-  |
-  v
-执行请求 --失败--> 记录错误
-  |           |
-  |           v
-  |       清理资源
-  |
-  v
-解析响应数据 --失败--> 记录解析错误
-  |
-  v
-等待5分钟
-  |
-  +--循环--<
- */
+#include "Guider_ui/generated/events_init.h"
+
 static const char *TAG = "http_client";
 static char response_data[4096];
 static uint16_t response_len;
+static bool second;
 
 #define MAX_RETRY_COUNT 3
 uint8_t retry_count = 0;
@@ -66,7 +46,7 @@ esp_err_t http_client_event_handle(esp_http_client_event_t *evt)
 
     case HTTP_EVENT_ON_FINISH:
         parse_response(response_data);
-        ESP_LOGI(TAG, "Request finished");
+        // ESP_LOGI(TAG, "原始JSON数据: %s", response_data); 
         break;
     case HTTP_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "Disconnected from server");
@@ -107,12 +87,21 @@ esp_err_t http_client_init()
         ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
         result = err;
     }
-    esp_http_client_set_url(client, "http://restapi.amap.com/v3/weather/weatherInfo?city=511503&key=74ec1c78aa5f61d12127d87ee00976db&extensions=all");
-    if (err != ESP_OK)
+
+    memset(response_data, 0, sizeof(response_data));
+    response_len = 0;
+
+    if (second)
     {
-        ESP_LOGE(TAG, "预报天气请求失败: %s", esp_err_to_name(err));
-        esp_http_client_cleanup(client);
-        return err;
+        // 设置第二个URL
+        esp_http_client_set_url(client, "http://restapi.amap.com/v3/weather/weatherInfo?city=511503&key=74ec1c78aa5f61d12127d87ee00976db&extensions=all");
+
+        // 执行第二次请求
+        err = esp_http_client_perform(client);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "预报天气请求失败: %s", esp_err_to_name(err));
+            result = err;
+        }
     }
     esp_http_client_cleanup(client);
     return result;
@@ -140,9 +129,10 @@ void parse_response(const char *json_str)
 
     cJSON_Delete(root);
 }
-
+RealTimeWeather parsed_weather_data = {0};
 void parse_lives(cJSON *lives)
 {
+    ESP_LOGI(TAG,"正在解析实时天气");
     // 确保解析完整数据
     if (response_len > 0)
     {
@@ -150,119 +140,123 @@ void parse_lives(cJSON *lives)
         cJSON *live;
         cJSON_ArrayForEach(live, lives)
         {
-            RealTimeWeather data = {0};
             cJSON *province = cJSON_GetObjectItemCaseSensitive(live, "province");
             if (cJSON_IsString(province))
             {
-                strncpy(data.province, province->valuestring, sizeof(data.province) - 1);
+                strncpy(parsed_weather_data.province, province->valuestring, sizeof(parsed_weather_data.province) - 1);
+                ESP_LOGI(TAG,"省份：%s",parsed_weather_data.province);
             }
 
             cJSON *city = cJSON_GetObjectItemCaseSensitive(live, "city");
             if (cJSON_IsString(city))
             {
-                strncpy(data.city, city->valuestring, sizeof(data.city) - 1);
-            }
-
-            cJSON *reporttime = cJSON_GetObjectItemCaseSensitive(live, "reporttime");
-            if (cJSON_IsString(reporttime))
-            {
-                strncpy(data.reporttime, reporttime->valuestring, sizeof(data.reporttime) - 1);
+                strncpy(parsed_weather_data.city, city->valuestring, sizeof(parsed_weather_data.city) - 1);
+                ESP_LOGI(TAG,"城市：%s",parsed_weather_data.city);
             }
 
             cJSON *weather = cJSON_GetObjectItemCaseSensitive(live, "weather");
             if (cJSON_IsString(weather))
             {
-                strncpy(data.weather, weather->valuestring, sizeof(data.weather) - 1);
+                strncpy(parsed_weather_data.weather, weather->valuestring, sizeof(parsed_weather_data.weather) - 1);
+                ESP_LOGI(TAG,"天气：%s",parsed_weather_data.weather);
             }
 
             cJSON *temperature = cJSON_GetObjectItemCaseSensitive(live, "temperature");
             if (cJSON_IsString(temperature))
             {
-                strncpy(data.temperature, temperature->valuestring, sizeof(data.temperature) - 1);
+                strncpy(parsed_weather_data.temperature, temperature->valuestring, sizeof(parsed_weather_data.temperature) - 1);
+                ESP_LOGI(TAG,"温度：%s",parsed_weather_data.temperature);
             }
 
             cJSON *winddirection = cJSON_GetObjectItemCaseSensitive(live, "winddirection");
             if (cJSON_IsString(winddirection))
             {
-                strncpy(data.winddirection, winddirection->valuestring, sizeof(data.winddirection) - 1);
+                strncpy(parsed_weather_data.winddirection, winddirection->valuestring, sizeof(parsed_weather_data.winddirection) - 1);
             }
 
             cJSON *windpower = cJSON_GetObjectItemCaseSensitive(live, "windpower");
             if (cJSON_IsString(windpower))
             {
-                strncpy(data.windpower, windpower->valuestring, sizeof(data.windpower) - 1);
+                strncpy(parsed_weather_data.windpower, windpower->valuestring, sizeof(parsed_weather_data.windpower) - 1);
             }
 
             cJSON *humidity = cJSON_GetObjectItemCaseSensitive(live, "humidity");
             if (cJSON_IsString(humidity))
             {
-                strncpy(data.humidity, humidity->valuestring, sizeof(data.humidity) - 1);
+                strncpy(parsed_weather_data.humidity, humidity->valuestring, sizeof(parsed_weather_data.humidity) - 1);
+            }
+
+            cJSON *reporttime = cJSON_GetObjectItemCaseSensitive(live, "reporttime");
+            if (cJSON_IsString(reporttime))
+            {
+                strncpy(parsed_weather_data.reporttime, reporttime->valuestring, sizeof(parsed_weather_data.reporttime) - 1);
+                ESP_LOGI(TAG,"更新时间：%s",parsed_weather_data.reporttime);
             }
         }
+        second = true;
     }
 }
 
+CityWeather forecast_weather_data = {0};
 void parse_forecasts(cJSON *forecasts,CityWeather *output)
 {
+    ESP_LOGI(TAG,"正在解析预报天气");
     cJSON *city_forecasts;
     int day_index = 0;
     cJSON_ArrayForEach(city_forecasts,forecasts)
     {
         cJSON *casts = cJSON_GetObjectItemCaseSensitive(city_forecasts,"casts");
         if (!cJSON_IsArray(casts)) continue;
-        if (day_index >= 4) break;
+        
 
         cJSON *cast;
-        cJSON_ArrayForEach(casts,casts)
+        cJSON_ArrayForEach(cast,casts)
         {
-            DailyForecast data = {0};
+            if (day_index >= 4) break;
 
-            cJSON *date = cJSON_GetObjectItemCaseSensitive(city_forecasts,"date");
+            cJSON *date = cJSON_GetObjectItemCaseSensitive(cast,"date");
             if (cJSON_IsString(date))
             {
-                strncpy(data.date,date->valuestring,sizeof(data.date) - 1);
+                strncpy(forecast_weather_data.casts[day_index].date,date->valuestring,sizeof(forecast_weather_data.casts[day_index].date) - 1);
+                ESP_LOGI(TAG,"时间：%s",forecast_weather_data.casts[day_index].date);
             }
 
-            cJSON *week = cJSON_GetObjectItemCaseSensitive(city_forecasts,"week");
+            cJSON *week = cJSON_GetObjectItemCaseSensitive(cast,"week");
             if (cJSON_IsString(week))
             {
-                strncpy(data.week,week->valuestring,sizeof(data.week) - 1);
+                strncpy(forecast_weather_data.casts[day_index].week,week->valuestring,sizeof(forecast_weather_data.casts[day_index].week) - 1);
             }
             
-            cJSON *dayweather = cJSON_GetObjectItemCaseSensitive(city_forecasts,"dayweather");
+            cJSON *dayweather = cJSON_GetObjectItemCaseSensitive(cast,"dayweather");
             if (cJSON_IsString(dayweather))
             {
-                strncpy(data.dayweather,dayweather->valuestring,sizeof(data.dayweather) - 1);
+                strncpy(forecast_weather_data.casts[day_index].dayweather,dayweather->valuestring,sizeof(forecast_weather_data.casts[day_index].dayweather) - 1);
+                ESP_LOGI(TAG,"天气：%s",forecast_weather_data.casts[day_index].dayweather);
             }
 
-            cJSON *daytemp = cJSON_GetObjectItemCaseSensitive(city_forecasts,"daytemp");
+            cJSON *daytemp = cJSON_GetObjectItemCaseSensitive(cast,"daytemp");
             if (cJSON_IsString(daytemp))
             {
-                strncpy(data.daytemp,daytemp->valuestring,sizeof(data.daytemp) - 1);
+                strncpy(forecast_weather_data.casts[day_index].daytemp,daytemp->valuestring,sizeof(forecast_weather_data.casts[day_index].daytemp) - 1);
+                ESP_LOGI(TAG,"温度：%s",forecast_weather_data.casts[day_index].daytemp);
             }
 
-            cJSON *daywind = cJSON_GetObjectItemCaseSensitive(city_forecasts,"daywind");
+            cJSON *daywind = cJSON_GetObjectItemCaseSensitive(cast,"daywind");
             if (cJSON_IsString(daywind))
             {
-                strncpy(data.daywind,daywind->valuestring,sizeof(data.daywind) - 1);
+                strncpy(forecast_weather_data.casts[day_index].daywind,daywind->valuestring,sizeof(forecast_weather_data.casts[day_index].daywind) - 1);
             }
 
-            cJSON *daypower = cJSON_GetObjectItemCaseSensitive(city_forecasts,"daypower");
-            if (cJSON_IsString(daywind))
+            cJSON *daypower = cJSON_GetObjectItemCaseSensitive(cast,"daypower");
+            if (cJSON_IsString(daypower))
             {
-                strncpy(data.daypower,daypower->valuestring,sizeof(data.daypower) - 1);
+                strncpy(forecast_weather_data.casts[day_index].daypower,daypower->valuestring,sizeof(forecast_weather_data.casts[day_index].daypower) - 1);
             }
 
             day_index++;
 
         }
     }
-
-
-
-
-
-    
 }
 
 void weather_task(void *pvParams)
@@ -275,20 +269,19 @@ void weather_task(void *pvParams)
         return;
     }
     // 等待Wi-Fi连接成功
-    EventBits_t bits = xEventGroupWaitBits(net_events, SYS_EVENT_WIFI_READY,
+    xEventGroupWaitBits(net_events, SYS_EVENT_WIFI_READY,
                                            pdFALSE, pdTRUE, portMAX_DELAY);
 
-    if (bits & SYS_EVENT_WIFI_READY)
-    {
-        xEventGroupClearBits(net_events, SYS_EVENT_WIFI_READY);
-    }
-
+    // if (bits & SYS_EVENT_WIFI_READY)
+    // {
+    //     xEventGroupClearBits(net_events, SYS_EVENT_WIFI_READY);
+    // }
+    esp_err_t ret = http_client_init();
     while (1)
     {
-        esp_err_t ret = http_client_init();
         if (ret == ESP_OK)
         {
-            ESP_LOGI(TAG, "天气数据获取成功！");
+            ESP_LOGI(TAG, "天气数据获取与解析成功");
             retry_count = 0; // 重置重试计数
         }
         else

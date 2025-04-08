@@ -13,7 +13,8 @@
 #include "widgets_init.h"
 #include "esp_log.h"
 #include "esp_lvgl_port.h"
-
+#include "../Guider_ui/generated/gui_guider.h"
+#include "custom/custom.h"
 void ui_init_style(lv_style_t * style)
 {
     if (style->prop_cnt > 1)
@@ -47,7 +48,6 @@ void ui_init_style(lv_style_t * style)
 void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, bool * old_scr_del, ui_setup_scr_t setup_scr,
                            lv_screen_load_anim_t anim_type, uint32_t time, uint32_t delay, bool is_clean, bool auto_del)
 {
-    vTaskDelay(pdMS_TO_TICKS(100));
     lvgl_port_lock(0);
     lv_obj_t * act_scr = lv_screen_active();
     lv_group_t *group = lv_obj_get_group(act_scr);
@@ -60,22 +60,27 @@ void ui_load_scr_animation(lv_ui *ui, lv_obj_t ** new_scr, bool new_scr_del, boo
 #endif
     if (auto_del && is_clean && lv_obj_is_valid(act_scr)) {
         lv_obj_remove_event_cb(act_scr, NULL);
-        ESP_LOGI("uI", "Cleaning old screen: %p", act_scr);
+        ESP_LOGI("UI", "清理旧屏幕: %p", act_scr);
         lv_obj_clean(act_scr);
     }
+    lvgl_port_unlock();
+
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    lvgl_port_lock(0);
     if (new_scr_del && !lv_obj_is_valid(*new_scr)) {
         setup_scr(ui);
     }
-
     *old_scr_del = auto_del;
     if (lv_obj_is_valid(*new_scr)) {
         time = (anim_type != LV_SCR_LOAD_ANIM_NONE) ? time : 0;
         delay = (anim_type != LV_SCR_LOAD_ANIM_NONE) ? delay : 0;
-        ESP_LOGI("UI", "Loading screen %p with anim %d", *new_scr, anim_type);
+        ESP_LOGI("UI", "加载屏幕 %p 动画 %d", *new_scr, anim_type);
         lv_screen_load_anim(*new_scr, anim_type, time, delay, auto_del);
     } else {
-        ESP_LOGE("UI", "New screen is invalid!");
+        ESP_LOGE("UI", "新屏幕无效!");
     }
+
     
     if (auto_del && lv_obj_is_valid(act_scr)) {
         if (group)

@@ -16,8 +16,9 @@ extern "C" {
 #include "../Guider_ui/generated/gui_guider.h"
 #include "weather.h"
 
+extern lv_timer_t *clock_timer;
+
 void custom_init(lv_ui *ui);
-void custom_handle_brightness(uint8_t value);  // 声明业务函数
 void forecast_weather();
 void realtime_weather();
 void realtime(RealTimeWeather *ctx);

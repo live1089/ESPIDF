@@ -42,15 +42,6 @@ char realtime_buffer[512];
 char forecast_buffer[512];
 
 
-
-void custom_handle_brightness(uint8_t value) {  
-
-    hardware_set_brightness(value);  
-    // 2. 界面更新  
-    lvgl_port_lock(0);
-    lv_label_set_text_fmt(guider_ui.screen_4_label_1, "%d", value);
-    lvgl_port_unlock();
-}
 static const char *TAG = "custom";
 lv_group_t* group;
 
@@ -68,7 +59,6 @@ void setup_focus_navigation(lv_ui *ui) {
     } else {
         ESP_LOGE(TAG, "Input device is NOT associated with the group!");
     }
-
     if (ui->screen_btn_1) lv_group_add_obj(group, ui->screen_btn_1);
     if (ui->screen_btn_2) lv_group_add_obj(group, ui->screen_btn_2);
     if (ui->screen_btn_3) lv_group_add_obj(group, ui->screen_btn_3);
@@ -96,22 +86,20 @@ void update_net_status(lv_obj_t *net_label) {
 }
 
 
-RealTimeWeather realtime_data;
-CityWeather forecast_data;
-
 void forecast_weather()
 {
-    forecast(&forecast_data);
+    forecast(&forecast_weather_data);
+    ESP_LOGI(TAG,"获取预报天气");
     lvgl_port_lock(0);
     lv_span_set_text(guider_ui.screen_1_spangroup_1_span, forecast_buffer);
-    
     lv_spangroup_refr_mode(guider_ui.screen_1_spangroup_1);
     lvgl_port_unlock();
 }
 
 void realtime_weather()
 {
-    realtime(&realtime_data);
+    ESP_LOGI(TAG,"获取实时天气");
+    realtime(&parsed_weather_data);
     lvgl_port_lock(0);
     lv_span_set_text(guider_ui.screen_1_spangroup_1_span,realtime_buffer);
     lv_spangroup_refr_mode(guider_ui.screen_1_spangroup_1);
@@ -125,19 +113,19 @@ void custom_init(lv_ui *ui)
 }
 
 
-void realtime(RealTimeWeather *ctx) {
-    // 生成显示文本
-    
+void realtime(RealTimeWeather *ctx) 
+{
     snprintf(realtime_buffer, sizeof(realtime_buffer), 
         "                   实时天气\n\n---------------------------------\n\n城市/区：%s%s\n\n天气：%s        温度：%s℃\n\n风向：%s\n\n风力：%s 级\n\n空气湿度：%s\n\n发布时间：%s", 
         ctx->province,ctx->city,ctx->weather,ctx->temperature,ctx->winddirection,ctx->windpower,ctx->humidity,ctx->reporttime
     );
+    // ESP_LOGI("实时天气", "格式化后的天气预报:\n%s", realtime_buffer);
 }
 
 void forecast(CityWeather *f)
 {
     snprintf(forecast_buffer,sizeof(forecast_buffer),
-    "                 预报天气\n\n"
+    "                   预报天气\n\n"
                                                     "------------------------------\n\n"
                                                     "%s %s %s℃\n\n\n"
                                                     "%s %s %s℃\n\n\n"
@@ -147,5 +135,8 @@ void forecast(CityWeather *f)
     f->casts[1].date,f->casts[1].dayweather,f->casts[1].daytemp,
     f->casts[2].date,f->casts[2].dayweather,f->casts[2].daytemp,
     f->casts[3].date,f->casts[3].dayweather,f->casts[3].daytemp);
+
+    // ESP_LOGI("预报天气", "格式化后的天气预报:\n%s", forecast_buffer);
 }
+
 

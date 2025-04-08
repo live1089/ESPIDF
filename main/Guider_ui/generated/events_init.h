@@ -16,6 +16,9 @@ extern "C" {
 
 #include "gui_guider.h"
 
+extern bool sec;
+
+
 void events_init(lv_ui *ui);
 
 void events_init_screen(lv_ui *ui);

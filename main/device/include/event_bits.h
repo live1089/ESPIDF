@@ -16,6 +16,7 @@ extern EventGroupHandle_t net_events;   // 网络模块事件（Wi-Fi、BLE）
 // 网络模块事件
 #define WIFI_CONNECTED_BIT       (1 << 1) // 连接成功标志
 #define WIFI_FAIL_BIT            (1 << 2) // 连接失败标志
+#define Notice_nvs               (1 << 3)
 
 
 
