@@ -65,17 +65,17 @@ void setup_scr_screen_3(lv_ui *ui)
 
     //Write codes screen_3_spangroup_1
     ui->screen_3_spangroup_1 = lv_spangroup_create(ui->screen_3);
-    lv_obj_set_pos(ui->screen_3_spangroup_1, 70, 41);
+    lv_obj_set_pos(ui->screen_3_spangroup_1, 60, 41);
     lv_obj_set_size(ui->screen_3_spangroup_1, 182, 139);
     lv_spangroup_set_align(ui->screen_3_spangroup_1, LV_TEXT_ALIGN_LEFT);
     lv_spangroup_set_overflow(ui->screen_3_spangroup_1, LV_SPAN_OVERFLOW_CLIP);
     lv_spangroup_set_mode(ui->screen_3_spangroup_1, LV_SPAN_MODE_BREAK);
     //create span
     ui->screen_3_spangroup_1_span = lv_spangroup_new_span(ui->screen_3_spangroup_1);
-    lv_span_set_text(ui->screen_3_spangroup_1_span, "温度：   36 度\n\n\n存储：   25 kb\n\n\n内存：   23 kb");
+    lv_span_set_text(ui->screen_3_spangroup_1_span, "开机时间：   ");
     lv_style_set_text_color(lv_span_get_style(ui->screen_3_spangroup_1_span), lv_color_hex(0xffffff));
     lv_style_set_text_decor(lv_span_get_style(ui->screen_3_spangroup_1_span), LV_TEXT_DECOR_NONE);
-    lv_style_set_text_font(lv_span_get_style(ui->screen_3_spangroup_1_span), &lv_font_HYZiKuTangYiShanKaiW_19);
+    lv_style_set_text_font(lv_span_get_style(ui->screen_3_spangroup_1_span), &lv_font_HYBaoSongJ_12);
 
     //Write style state: LV_STATE_DEFAULT for &style_screen_3_spangroup_1_main_main_default
     static lv_style_t style_screen_3_spangroup_1_main_main_default;
@@ -116,13 +116,20 @@ void setup_scr_screen_3(lv_ui *ui)
     lv_obj_set_style_text_align(ui->screen_3_btn_2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN|LV_STATE_DEFAULT);
 
     //The custom code of screen_3.
-
+    screen_3_timer_enabled = false;
+    if (!screen_3_timer_enabled) {
+        timer = lv_timer_create(sysmon_update, 1000, NULL);
+        ESP_LOGI("system","启动系统状态定时器");
+        screen_3_timer_enabled = true;
+    }
 
     //Update current screen layout.
-        lvgl_port_lock(0);
+    lvgl_port_lock(0);
     lv_obj_update_layout(ui->screen_3);
     lvgl_port_unlock();
 
     //Init events for screen.
     events_init_screen_3(ui);
 }
+
+

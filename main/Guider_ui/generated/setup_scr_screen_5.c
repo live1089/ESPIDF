@@ -13,8 +13,8 @@
 #include "events_init.h"
 #include "widgets_init.h"
 #include "..\Guider_ui\custom\custom.h"
-
-
+#include "device_lcd.h"
+#include "setup_nvs.h"
 
 void setup_scr_screen_5(lv_ui *ui)
 {
@@ -28,13 +28,21 @@ void setup_scr_screen_5(lv_ui *ui)
     lv_obj_set_style_bg_color(ui->screen_5, lv_color_hex(0x000000), LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_bg_grad_dir(ui->screen_5, LV_GRAD_DIR_NONE, LV_PART_MAIN|LV_STATE_DEFAULT);
 
+    //LVGL定时器
+    screen_5_slider_timer_enabled = false;
+    if (!screen_5_slider_timer_enabled) {
+        timer = lv_timer_create(Brightness_update, 1000, NULL);
+        ESP_LOGI("亮度","启动亮度状态定时器");
+        screen_5_slider_timer_enabled = true;
+    }
+    
     //Write codes screen_5_slider_1
     ui->screen_5_slider_1 = lv_slider_create(ui->screen_5);
     lv_obj_set_pos(ui->screen_5_slider_1, 83, 124);
     lv_obj_set_size(ui->screen_5_slider_1, 160, 8);
     lv_slider_set_range(ui->screen_5_slider_1, 0, 100);
     lv_slider_set_mode(ui->screen_5_slider_1, LV_SLIDER_MODE_NORMAL);
-    lv_slider_set_value(ui->screen_5_slider_1, 50, LV_ANIM_OFF);
+    lv_slider_set_value(ui->screen_5_slider_1, get_brightness(), LV_ANIM_ON);
 
     //Write style for screen_5_slider_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
     lv_obj_set_style_bg_opa(ui->screen_5_slider_1, 60, LV_PART_MAIN|LV_STATE_DEFAULT);
@@ -60,7 +68,7 @@ void setup_scr_screen_5(lv_ui *ui)
     ui->screen_5_label_1 = lv_label_create(ui->screen_5);
     lv_obj_set_pos(ui->screen_5_label_1, 109, 83);
     lv_obj_set_size(ui->screen_5_label_1, 103, 19);
-    lv_label_set_text(ui->screen_5_label_1, "屏幕亮度：24");
+    lv_label_set_text(ui->screen_5_label_1, "屏幕亮度：--");
     lv_label_set_long_mode(ui->screen_5_label_1, LV_LABEL_LONG_WRAP);
 
     //Write style for screen_5_label_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
@@ -115,10 +123,11 @@ void setup_scr_screen_5(lv_ui *ui)
     lv_obj_set_style_text_opa(ui->screen_5_btn_1, 255, LV_PART_MAIN|LV_STATE_FOCUSED);
 
     //The custom code of screen_5.
-
+    ESP_LOGI("SCREEN_5","设置亮度值");
+    hardware_set_brightness(get_brightness());
 
     //Update current screen layout.
-        lvgl_port_lock(0);
+    lvgl_port_lock(0);
     lv_obj_update_layout(ui->screen_5);
     lvgl_port_unlock();
 

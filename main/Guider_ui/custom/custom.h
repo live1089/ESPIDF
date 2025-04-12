@@ -17,17 +17,24 @@ extern "C" {
 #include "weather.h"
 
 extern lv_timer_t *clock_timer;
+extern uint8_t brightness_value;
+extern bool screen_4_wifi_timer_enabled;
+extern lv_timer_t *WIFI_timer;
 
+extern bool screen_3_timer_enabled;
+extern lv_timer_t * timerss;
+void sysmon_update(lv_timer_t *timerss);
 void custom_init(lv_ui *ui);
 void forecast_weather();
 void realtime_weather();
 void realtime(RealTimeWeather *ctx);
 void forecast(CityWeather *f);
-
-
-
-
-
+void update_net_status();
+void updata_net_label();
+void WIFI_NOW(lv_timer_t *timer);
+char* sys_stack();
+char* sys_heap();
+char* info_sys();
 #ifdef __cplusplus
 }
 #endif

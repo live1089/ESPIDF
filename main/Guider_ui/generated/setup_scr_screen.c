@@ -232,7 +232,7 @@ void setup_scr_screen(lv_ui *ui)
     ui->screen_digital_clock_1 = lv_label_create(ui->screen);
     lv_obj_set_pos(ui->screen_digital_clock_1, 114, 79);
     lv_obj_set_size(ui->screen_digital_clock_1, 96, 21);
-    lv_label_set_text(ui->screen_digital_clock_1, "--:--:-- --");
+    lv_label_set_text(ui->screen_digital_clock_1, "--:--:--");
     if (!screen_digital_clock_1_timer_enabled) {
         ESP_LOGI("screen","启动LVGL时间定时器");
         clock_timer = lv_timer_create(screen_digital_clock_1_timer, 1000, NULL);

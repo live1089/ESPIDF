@@ -15,47 +15,60 @@
 #include "esp_lvgl_port.h"
 #include "custom/custom.h"
 #include "device_lcd.h"
-
+#include "setup_wifi.h"
+#include "setup_rtc.h"
+#include "setup_nvs.h"
+#include "event_bits.h"
+#include "freertos/event_groups.h"
 #if LV_USE_GUIDER_SIMULATOR && LV_USE_FREEMASTER
 #include "freemaster_client.h"
 #endif
 
 static const char *TAG = "events";
+/* 天气 */
 static void screen_btn_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {  
-        ui_load_scr_animation(&guider_ui, &guider_ui.screen_1, guider_ui.screen_1_del, &guider_ui.screen_del, setup_scr_screen_1, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
+        ESP_LOGI(TAG,"加载屏幕：天气");
+        if (wifi_connected())
+        {
+            ui_load_scr_animation(&guider_ui, &guider_ui.screen_1, guider_ui.screen_1_del, &guider_ui.screen_del, setup_scr_screen_1, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
+            realtime_weather();
+        }else{
+            ui_load_scr_animation(&guider_ui, &guider_ui.screen_1, guider_ui.screen_1_del, &guider_ui.screen_del, setup_scr_screen_1, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
+        }
         break;
     }
     default:
         break;
     }
 }
-
+/* 设置 */
 static void screen_btn_2_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {
+        ESP_LOGI(TAG,"加载屏幕：设置菜单");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
-
         break;
     }
     default:
         break;
     }
 }
-
+/* 传感器 */
 static void screen_btn_3_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {
+        ESP_LOGI(TAG,"加载屏幕：传感器");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_6, guider_ui.screen_6_del, &guider_ui.screen_del, setup_scr_screen_6, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
@@ -72,13 +85,14 @@ void events_init_screen (lv_ui *ui)
     lv_obj_add_event_cb(ui->screen_btn_3, screen_btn_3_event_handler, LV_EVENT_PRESSED, ui);
     lvgl_port_unlock();
 }
-
+/* 天气界面退出按键 */
 static void screen_1_btn_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {
+        ESP_LOGI(TAG,"加载屏幕：主界面");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_1_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
@@ -86,7 +100,7 @@ static void screen_1_btn_1_event_handler (lv_event_t *e)
         break;
     }
 }
-
+/* 天气界面 实时/预报 切换开关 */
 static void screen_1_sw_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -94,7 +108,7 @@ static void screen_1_sw_1_event_handler (lv_event_t *e)
     case LV_EVENT_PRESSED:
     {
         lv_obj_t * status_obj = lv_event_get_target(e);
-        int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
+        bool status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
         bool sec = status;
         if (status)
         {
@@ -117,26 +131,41 @@ void events_init_screen_1 (lv_ui *ui)
     lvgl_port_unlock();
 }
 
+/* 网络设置菜单 */
 static void screen_2_list_1_item0_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {
+        ESP_LOGI(TAG,"加载屏幕：网络设置");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_4, guider_ui.screen_4_del, &guider_ui.screen_2_del, setup_scr_screen_4, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
+        if (lv_obj_is_valid(guider_ui.screen_4_label_1) && lv_obj_is_valid(guider_ui.screen_4_led_1)) {
+            wifi_sta ?  lv_obj_set_state(guider_ui.screen_4_sw_1, LV_STATE_CHECKED, true) : 
+                        lv_obj_set_state(guider_ui.screen_4_sw_1, LV_STATE_CHECKED, false);
+            if (wifi_connected())
+            {
+                lv_led_on(guider_ui.screen_4_led_1);  // 打开 LED
+                lv_label_set_text_fmt(guider_ui.screen_4_label_1, "网络连接：%s", wifi_ssid);
+            }else{
+                lv_led_off(guider_ui.screen_4_led_1);  // 关闭 LED
+                lv_label_set_text(guider_ui.screen_4_label_1, "网络连接 ");  // 更新标签文本
+            }
+        }
         break;
     }
     default:
         break;
     }
 }
-
+/* 屏幕亮度菜单 */
 static void screen_2_list_1_item1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {
+        ESP_LOGI(TAG,"加载屏幕：屏幕亮度");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_5, guider_ui.screen_5_del, &guider_ui.screen_2_del, setup_scr_screen_5, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
@@ -144,27 +173,31 @@ static void screen_2_list_1_item1_event_handler (lv_event_t *e)
         break;
     }
 }
-
+/* 系统监控菜单 */
 static void screen_2_list_1_item2_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {
+        ESP_LOGI(TAG,"加载屏幕：系统监控");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_3, guider_ui.screen_3_del, &guider_ui.screen_2_del, setup_scr_screen_3, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
+        lv_span_set_text(guider_ui.screen_3_spangroup_1_span ,info_sys());
+        ESP_LOGI(TAG,"%s",info_sys());
         break;
     }
     default:
         break;
     }
 }
-
+/* 退出，回到主界面 */
 static void screen_2_list_1_item3_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {
+        ESP_LOGI(TAG,"加载屏幕：主界面");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen, guider_ui.screen_del, &guider_ui.screen_2_del, setup_scr_screen, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
@@ -183,20 +216,23 @@ void events_init_screen_2 (lv_ui *ui)
     lvgl_port_unlock();
 }
 
+/* 系统监控退出按键 */
 static void screen_3_btn_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
     {
+        ESP_LOGI(TAG,"加载屏幕：设置菜单");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_3_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
+        
         break;
     }
     default:
         break;
     }
 }
-
+/* 系统监控关机按键 */
 static void screen_3_btn_2_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -218,13 +254,13 @@ void events_init_screen_3 (lv_ui *ui)
     lv_obj_add_event_cb(ui->screen_3_btn_2, screen_3_btn_2_event_handler, LV_EVENT_PRESSED, ui);
     lvgl_port_unlock();
 }
-
+/* 网络连接退出按键 */
 static void screen_4_btn_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
     case LV_EVENT_PRESSED:
-    {   ESP_LOGI(TAG,"加载屏幕：");
+    {   ESP_LOGI(TAG,"加载屏幕：设置菜单");
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_4_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
         break;
     }
@@ -232,34 +268,50 @@ static void screen_4_btn_1_event_handler (lv_event_t *e)
         break;
     }
 }
-
-void events_init_screen_4 (lv_ui *ui)
-{
-    lvgl_port_lock(0);
-    lv_obj_add_event_cb(ui->screen_4_btn_1, screen_4_btn_1_event_handler, LV_EVENT_PRESSED, ui);
-    lvgl_port_unlock();
-}
-
-static void screen_5_slider_1_event_handler (lv_event_t *e)
+/* 网络连接开关 */
+static void screen_4_sw_1_event_handler (lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     switch (code) {
-    case LV_EVENT_VALUE_CHANGED:
+    case LV_EVENT_PRESSED:
     {
-        lvgl_port_lock(0);  
-        uint16_t value = lv_slider_get_value(lv_event_get_target(e));
-        if (lv_obj_is_valid(guider_ui.screen_5_label_1))
+        lv_obj_t * status_obj = lv_event_get_target(e);
+        bool status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
+        if (status)
         {
-            lv_label_set_text_fmt(guider_ui.screen_5_label_1, "%d", value);
+            if (net_events == NULL) {
+                ESP_LOGW(TAG, "事件组未初始化，忽略操作");
+                return;
+            }
+            // ESP_LOGI(TAG,"关");
+            xEventGroupSetBits(net_events,WIFI_STOP);
+            updata_net_label();
+        }else{
+            if (net_events == NULL) {
+                ESP_LOGW(TAG, "事件组未初始化，忽略操作");
+                return;
+            }
+            // ESP_LOGI(TAG,"开");
+            xEventGroupSetBits(net_events,WIFI_START);
+            update_net_status();
         }
-        lvgl_port_unlock();
-        hardware_set_brightness(value);
         break;
     }
     default:
         break;
     }
 }
+
+
+void events_init_screen_4 (lv_ui *ui)
+{
+    lvgl_port_lock(0);
+    lv_obj_add_event_cb(ui->screen_4_btn_1, screen_4_btn_1_event_handler, LV_EVENT_PRESSED, ui);
+    lv_obj_add_event_cb(ui->screen_4_sw_1, screen_4_sw_1_event_handler, LV_EVENT_PRESSED, ui);
+    lvgl_port_unlock();
+}
+
+
 
 static void screen_5_btn_1_event_handler (lv_event_t *e)
 {
@@ -268,6 +320,8 @@ static void screen_5_btn_1_event_handler (lv_event_t *e)
     case LV_EVENT_PRESSED:
     {
         ui_load_scr_animation(&guider_ui, &guider_ui.screen_2, guider_ui.screen_2_del, &guider_ui.screen_5_del, setup_scr_screen_2, LV_SCR_LOAD_ANIM_NONE, 0, 0, true, true);
+        hardware_set_brightness(brightness_value);
+        save_brightness(brightness_value);
         break;
     }
     default:
@@ -278,7 +332,6 @@ static void screen_5_btn_1_event_handler (lv_event_t *e)
 void events_init_screen_5 (lv_ui *ui)
 {
     lvgl_port_lock(0);
-    lv_obj_add_event_cb(ui->screen_5, screen_5_slider_1_event_handler, LV_EVENT_VALUE_CHANGED, ui);
     lv_obj_add_event_cb(ui->screen_5_btn_1, screen_5_btn_1_event_handler, LV_EVENT_PRESSED, ui);
     lvgl_port_unlock();
 }
@@ -385,7 +438,7 @@ static void screen_7_sw_1_event_handler (lv_event_t *e)
     case LV_EVENT_PRESSED:
     {
         lv_obj_t * status_obj = lv_event_get_target(e);
-        int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
+        bool status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
 
         break;
     }
@@ -423,7 +476,7 @@ static void screen_8_sw_1_event_handler (lv_event_t *e)
     case LV_EVENT_PRESSED:
     {
         lv_obj_t * status_obj = lv_event_get_target(e);
-        int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
+        bool status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
 
         break;
     }
@@ -461,7 +514,7 @@ static void screen_9_sw_1_event_handler (lv_event_t *e)
     case LV_EVENT_PRESSED:
     {
         lv_obj_t * status_obj = lv_event_get_target(e);
-        int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
+        bool status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
 
         break;
     }
@@ -499,7 +552,7 @@ static void screen_10_sw_1_event_handler (lv_event_t *e)
     case LV_EVENT_PRESSED:
     {
         lv_obj_t * status_obj = lv_event_get_target(e);
-        int status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
+        bool status = lv_obj_has_state(status_obj, LV_STATE_CHECKED) ? true : false;
 
         break;
     }

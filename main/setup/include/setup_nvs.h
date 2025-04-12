@@ -10,5 +10,8 @@
 time_t load_time_from_nvs();
 void save_time_to_nvs(time_t utc);
 void nvs_init();
-
+void save_wifi_config(const char *ssid, const char *password);
+char get_wifi_config();
+uint8_t get_brightness();
+void save_brightness(uint8_t data);
 #endif

@@ -57,13 +57,10 @@ esp_err_t http_client_event_handle(esp_http_client_event_t *evt)
     }
     return ESP_OK;
 }
+esp_http_client_handle_t client;
 
-esp_err_t http_client_init()
+esp_err_t http_init()
 {
-    // 重置缓冲区和长度计数器
-    memset(response_data, 0, sizeof(response_data));
-    response_len = 0;
-
     esp_http_client_config_t config = {
         .url = "http://restapi.amap.com/v3/weather/weatherInfo?city=511503&key=74ec1c78aa5f61d12127d87ee00976db&extensions=base",
         .method = HTTP_METHOD_GET, // 请求类型（GET/POST）
@@ -72,19 +69,28 @@ esp_err_t http_client_init()
         .disable_auto_redirect = true,
         .buffer_size = 4096,
     };
-    esp_http_client_handle_t client = esp_http_client_init(&config);
+    client = esp_http_client_init(&config);
     if (!client)
     {
-        ESP_LOGE(TAG, "Failed to initialize HTTP client");
+        ESP_LOGE(TAG, "无法初始化 HTTP 客户端");
         return ESP_FAIL;
     }
+    return ESP_OK;
+}
+
+esp_err_t http_client_init()
+{
+    // 重置缓冲区和长度计数器
+    memset(response_data, 0, sizeof(response_data));
+    response_len = 0;
 
     // GET
     esp_err_t err = esp_http_client_perform(client);
     esp_err_t result = ESP_OK;
     if (err != ESP_OK)
     {
-        ESP_LOGE(TAG, "HTTP request failed: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "HTTP 请求失败。: %s", esp_err_to_name(err));
+        esp_http_client_cleanup(client);
         result = err;
     }
 
@@ -100,6 +106,7 @@ esp_err_t http_client_init()
         err = esp_http_client_perform(client);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "预报天气请求失败: %s", esp_err_to_name(err));
+            esp_http_client_cleanup(client);
             result = err;
         }
     }
@@ -269,14 +276,23 @@ void weather_task(void *pvParams)
         return;
     }
     // 等待Wi-Fi连接成功
-    xEventGroupWaitBits(net_events, SYS_EVENT_WIFI_READY,
-                                           pdFALSE, pdTRUE, portMAX_DELAY);
+    EventBits_t bits = xEventGroupWaitBits(net_events, 
+        SYS_EVENT_WIFI_READY | WIFI_STOP,
+        pdTRUE, pdFALSE, portMAX_DELAY
+    );
+    
+    if (bits & WIFI_STOP)
+    {
+        esp_http_client_cleanup(client);
 
-    // if (bits & SYS_EVENT_WIFI_READY)
-    // {
-    //     xEventGroupClearBits(net_events, SYS_EVENT_WIFI_READY);
-    // }
-    esp_err_t ret = http_client_init();
+        memset(&parsed_weather_data, 0, sizeof(RealTimeWeather));
+        memset(&forecast_weather_data, 0, sizeof(CityWeather));
+    }
+    esp_err_t ret = 0;
+    if (bits & SYS_EVENT_WIFI_READY)
+    {
+        ret = http_client_init();
+    }
     while (1)
     {
         if (ret == ESP_OK)
@@ -304,4 +320,14 @@ void weather_task(void *pvParams)
 }
 
 
+void weather_release_resources()
+{
+    memset(&parsed_weather_data, 0, sizeof(RealTimeWeather));
+    memset(&forecast_weather_data, 0, sizeof(CityWeather));
 
+    esp_http_client_cleanup(client);
+    second = false;
+    retry_count = 0;
+
+    ESP_LOGI(TAG, "天气资源清理完成");
+}

@@ -67,6 +67,15 @@ void setup_scr_screen_4(lv_ui *ui)
     ui->screen_4_sw_1 = lv_switch_create(ui->screen_4);
     lv_obj_set_pos(ui->screen_4_sw_1, 154, 49);
     lv_obj_set_size(ui->screen_4_sw_1, 47, 21);
+    lv_obj_set_state(ui->screen_4_sw_1, LV_STATE_CHECKED, false);
+
+    //LVGL定时器
+    screen_4_wifi_timer_enabled = false;
+    if (!screen_4_wifi_timer_enabled) {
+        WIFI_timer = lv_timer_create(WIFI_NOW, 2000, NULL);
+        ESP_LOGI("WIFI","启动WIFI状态定时器");
+        screen_4_wifi_timer_enabled = true;
+    }
 
     //Write style for screen_4_sw_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
     lv_obj_set_style_bg_opa(ui->screen_4_sw_1, 255, LV_PART_MAIN|LV_STATE_DEFAULT);
@@ -100,7 +109,7 @@ void setup_scr_screen_4(lv_ui *ui)
     ui->screen_4_label_1 = lv_label_create(ui->screen_4);
     lv_obj_set_pos(ui->screen_4_label_1, 34, 155);
     lv_obj_set_size(ui->screen_4_label_1, 215, 18);
-    lv_label_set_text(ui->screen_4_label_1, "网络连接：   iQOO neo9");
+    lv_label_set_text(ui->screen_4_label_1, "网络连接 xxxxxxxxx");
     lv_label_set_long_mode(ui->screen_4_label_1, LV_LABEL_LONG_WRAP);
 
     //Write style for screen_4_label_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.

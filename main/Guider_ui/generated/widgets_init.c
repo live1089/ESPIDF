@@ -14,20 +14,6 @@
 #include <string.h>
 #include "esp_log.h"
 
-
-void digital_clock_count(char *meridiem , DateTime *time)
-{
-    ESP_LOGI("now time","现在时间是：%d : %d : %d",time->hour,time->minute,time->second);
-    if(time->hour == 12 && time->second == 0 && time->minute == 0) {
-        if((lv_strcmp(meridiem, "PM") == 0)) {
-            lv_strcpy(meridiem, "AM");
-        }
-        else {
-            lv_strcpy(meridiem, "PM");
-        }
-    }
-}
-
 static lv_obj_t * screen_datetext_1_calendar;
 
 void screen_datetext_1_event_handler(lv_event_t *e)
@@ -42,27 +28,45 @@ void screen_datetext_1_event_handler(lv_event_t *e)
     }
 }
 
-
 bool screen_digital_clock_1_timer_enabled;
-
-void screen_digital_clock_1_timer(lv_timer_t *timer , DateTime *times)
+void screen_digital_clock_1_timer(lv_timer_t *timer)
 {
-    if (!wifi_connected() || !sntp_connection)
-    {
+    time_t now = time(NULL);
+    if (now == (time_t)-1) {
         return;
     }
 
-    digital_clock_count(screen_digital_clock_1_meridiem,&current_time);
+    struct tm timeinfo;
+    localtime_r(&now, &timeinfo);
     
+#if 0
+    ESP_LOGI("now time","现在时间是：%d/%02d/%02d %02d:%02d:%02d",
+        timeinfo.tm_year + 1900,
+        timeinfo.tm_mon + 1,
+        timeinfo.tm_mday,
+        timeinfo.tm_hour, 
+        timeinfo.tm_min, 
+        timeinfo.tm_sec);
+#endif
+
     if (lv_obj_is_valid(guider_ui.screen_digital_clock_1))
     {
-        lv_label_set_text_fmt(guider_ui.screen_digital_clock_1, "%d:%02d:%02d", times->hour, times->minute, times->second);
+        lv_label_set_text_fmt(guider_ui.screen_datetext_1,
+            "%d/%02d/%02d",
+            timeinfo.tm_year + 1900,
+            timeinfo.tm_mon + 1,
+            timeinfo.tm_mday);
 
+        lv_label_set_text_fmt(guider_ui.screen_digital_clock_1, 
+            "%02d:%02d:%02d", 
+            timeinfo.tm_hour, 
+            timeinfo.tm_min, 
+            timeinfo.tm_sec);
     }
-    // else{
-    //     lv_timer_delete(timer);
-    //     screen_digital_clock_1_timer_enabled = false;
-    //     ESP_LOGI("clock","删除定时器");
-    // }
+    else{
+        lv_timer_delete(timer);
+        screen_digital_clock_1_timer_enabled = false;
+        ESP_LOGI("clock","删除定时器");
+    }
 }
 

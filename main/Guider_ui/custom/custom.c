@@ -24,7 +24,7 @@
 #include "device_lcd.h"
 #include "setup_wifi.h"
 #include "weather.h"
-
+#include "setup_rtc.h"
 
 /**********************
  *      TYPEDEFS
@@ -66,30 +66,71 @@ void setup_focus_navigation(lv_ui *ui) {
 
     lvgl_port_unlock();
 }
-
-
-void update_net_status(lv_obj_t *net_label) {
-    bool connected = wifi_connected();
+lv_timer_t *WIFI_timer;
+bool screen_4_wifi_timer_enabled;
+void WIFI_NOW(lv_timer_t *WIFI_timer)
+{
     lvgl_port_lock(0);
-    if (connected) {
-        // 如果有网，显示label
-        lv_obj_clear_flag(guider_ui.screen_label_1, LV_OBJ_FLAG_HIDDEN);
-        lv_label_set_text(guider_ui.screen_label_1, "" LV_SYMBOL_WIFI " ");
-        lv_led_on(guider_ui.screen_4_led_1);
-    } else {
-        // 如果没网，隐藏label
-        lv_obj_add_flag(guider_ui.screen_label_1, LV_OBJ_FLAG_HIDDEN);
-        lv_led_off(guider_ui.screen_4_led_1);
+    if (lv_obj_is_valid(guider_ui.screen_4_label_1) && lv_obj_is_valid(guider_ui.screen_4_led_1)) {
+        if (wifi_connected()) {
+            // 如果网络连接成功
+            lv_led_on(guider_ui.screen_4_led_1);  // 打开 LED
+            lv_label_set_text_fmt(guider_ui.screen_4_label_1, "网络连接：%s", wifi_ssid);  // 更新标签文本
+        } else{
+            lv_led_off(guider_ui.screen_4_led_1);  // 关闭 LED
+            lv_label_set_text(guider_ui.screen_4_label_1, "网络连接: ");  // 更新标签文本
+        } 
+    }else{
+        lv_timer_delete(WIFI_timer);
+        screen_4_wifi_timer_enabled = false;
+        ESP_LOGI("WIFI","删除WIFI状态定时器");
     }
-    
     lvgl_port_unlock();
+}
+
+
+void update_net_status() {
+    lvgl_port_lock(0);
+    // 检查标签是否有效
+    if (lv_obj_is_valid(guider_ui.screen_4_label_1)) {
+        lv_label_set_text(guider_ui.screen_4_label_1, "网络连接: Connecting.......");
+    }
+    lvgl_port_unlock();
+}
+
+void updata_net_label()
+{
+    lvgl_port_lock(0);
+    if (lv_obj_is_valid(guider_ui.screen_4_label_1) && lv_obj_is_valid(guider_ui.screen_4_led_1)) {
+        lv_led_off(guider_ui.screen_4_led_1);  // 关闭 LED
+        lv_label_set_text(guider_ui.screen_4_label_1, "网络连接: disconnect"); 
+    }
+    lvgl_port_unlock();
+}
+
+uint8_t brightness_value;
+lv_timer_t * timer;
+bool screen_5_slider_timer_enabled;
+void Brightness_update(lv_timer_t *timer)
+{
+    if (lv_obj_is_valid(guider_ui.screen_5_label_1))
+    {
+        brightness_value = lv_slider_get_value(guider_ui.screen_5_slider_1);
+        lv_label_set_text_fmt(guider_ui.screen_5_label_1, "%d", brightness_value);
+        hardware_set_brightness(brightness_value);
+        
+    }else{
+        ESP_LOGI(TAG,"删除亮度状态定时器");
+        screen_5_slider_timer_enabled = false;
+        lv_timer_delete(timer);
+    }
 }
 
 
 void forecast_weather()
 {
     forecast(&forecast_weather_data);
-    ESP_LOGI(TAG,"获取预报天气");
+    // ESP_LOGI(TAG,"获取预报天气");
     lvgl_port_lock(0);
     lv_span_set_text(guider_ui.screen_1_spangroup_1_span, forecast_buffer);
     lv_spangroup_refr_mode(guider_ui.screen_1_spangroup_1);
@@ -98,7 +139,7 @@ void forecast_weather()
 
 void realtime_weather()
 {
-    ESP_LOGI(TAG,"获取实时天气");
+    // ESP_LOGI(TAG,"获取实时天气");
     realtime(&parsed_weather_data);
     lvgl_port_lock(0);
     lv_span_set_text(guider_ui.screen_1_spangroup_1_span,realtime_buffer);
@@ -108,6 +149,7 @@ void realtime_weather()
 
 void custom_init(lv_ui *ui)
 {
+    
     if (ui == NULL) return;  // 添加检查
     setup_focus_navigation(ui);
 }
@@ -139,4 +181,38 @@ void forecast(CityWeather *f)
     // ESP_LOGI("预报天气", "格式化后的天气预报:\n%s", forecast_buffer);
 }
 
-
+char* sys_stack()
+{
+    lv_mem_monitor_t mon;
+    lv_mem_monitor(&mon);
+    static char stack_str[64];
+    sprintf(stack_str, "UI堆栈已使用: %dKB,总堆栈: %dKB 碎片率:%d%%",  mon.total_size - mon.free_size, mon.total_size , mon.frag_pct);
+    return stack_str;
+}
+char* sys_heap()
+{
+    static char heap_str[64];
+    sprintf(heap_str,"系统可用堆为：%luKB,总堆：%uKB",esp_get_free_heap_size()/1024,heap_caps_get_total_size(MALLOC_CAP_8BIT));
+    // size_t total_heap_size = heap_caps_get_total_size(MALLOC_CAP_8BIT);
+    return heap_str;
+}
+char* info_sys()
+{
+    static char info_text[256];  // 假设信息总长度不超过 256 字符
+    snprintf(info_text, sizeof(info_text), "%s\n\n\n%s\n\n\n%s",
+            sys_run_time(), sys_stack(), sys_heap());
+    return info_text;
+}
+bool screen_3_timer_enabled = false;
+void sysmon_update(lv_timer_t *timerss)
+{
+    lvgl_port_lock(0);
+    if (lv_obj_is_valid(guider_ui.screen_3_btn_1) && lv_obj_is_valid(guider_ui.screen_3_btn_2)) {
+        lv_span_set_text(guider_ui.screen_3_spangroup_1_span ,info_sys());
+    }else{
+        lv_timer_delete(timerss);
+        screen_3_timer_enabled = false;
+        ESP_LOGI("system","删除系统状态定时器");
+    }
+    lvgl_port_unlock();
+}

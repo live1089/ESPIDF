@@ -37,6 +37,8 @@ extern DateTime current_time;
 
 void periodic_sync_task(void *pvParams);
 
-void sys_run_time();
+char* sys_run_time();
 void convert_to_datetime(time_t timestamp, DateTime *dt);
+void rtc_release_resources();
+void sntp_init_get_time(void);
 #endif

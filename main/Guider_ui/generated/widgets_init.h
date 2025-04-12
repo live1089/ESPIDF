@@ -22,9 +22,7 @@ extern char screen_digital_clock_1_meridiem[];
 
 
 void screen_datetext_1_event_handler(lv_event_t *e);
-// void screen_datetext_1_calendar_event_handler(lv_event_t *e);
-// void screen_datetext_1_init_calendar(lv_obj_t *obj, char * s);
-void screen_digital_clock_1_timer(lv_timer_t *timer , DateTime *time);
+void screen_digital_clock_1_timer(lv_timer_t *timer);
 
 
 #ifdef __cplusplus

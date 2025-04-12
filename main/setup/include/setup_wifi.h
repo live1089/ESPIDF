@@ -17,6 +17,10 @@
 
 void wifi_task(void *pvParams);
 bool wifi_connected();
+void wifi_release_resources();
+esp_err_t wifi_init_sta(const char *ssid, const char *password);
+
+extern bool wifi_sta;
 
 
 #endif

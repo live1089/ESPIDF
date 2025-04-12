@@ -20,8 +20,11 @@
 #include "..\Guider_ui\generated\events_init.h"
 #include "Guider_ui/custom/custom.h"
 #include "setup_rtc.h"
-
+#include "event_bits.h"
+#include "setup_nvs.h"
 lv_ui guider_ui; 
+// static const char *TAG = "main";
+EventGroupHandle_t task_events;
 /*
 1. 任务分配原则
 任务模块	优先级	堆栈大小	执行频率	关键特性
@@ -41,22 +44,30 @@ void stack_monitor(void *pvParameters) {
         ESP_LOGI("MEM", "Free: %luKB", esp_get_free_heap_size()/1024);
         ESP_LOGI("STACK", "Free Stack: %u bytes", 
                 (uxTaskGetStackHighWaterMark(*task_handle)*4));
-        ESP_LOGI("LVGL_MEM", "Used: %d, Frag: %d%%", mon.total_size - mon.free_size, mon.frag_pct);
-        sys_run_time();
+        // ESP_LOGI("LVGL_MEM", "Used: %d, Frag: %d%%", mon.total_size - mon.free_size, mon.frag_pct);
+        ESP_LOGI("WIFI_MEM", "Used: %d, Frag: %d%%", mon.total_size - mon.free_size, mon.frag_pct);
+        // sys_run_time();
         vTaskDelay(pdMS_TO_TICKS(3000));
     }
 }
 
-
+const char *ssid = wifi_ssid;
+const char *password = wifi_password;
 void Hardware_init()
 {
-    // 1. 硬件初始化
+    // 硬件初始化
     setup_gpio_init();
     init_backlight_pwm();
     gpio_key_init();
     device_lcd_init();
     soft_drv_lvgl_port_init();
-
+    nvs_init();
+    save_wifi_config(wifi_ssid,wifi_password);
+    // 驱动初始化
+    wifi_init_sta(ssid, password);
+    http_init();
+    sntp_init_get_time();
+    // UI初始化
     lvgl_port_lock(0);
     lv_init();
     setup_ui(&guider_ui);
@@ -64,25 +75,26 @@ void Hardware_init()
     lvgl_port_unlock();
 }
 
-EventGroupHandle_t ui_events;
+
 void app_main(void)
 {
     esp_log_level_set("*", ESP_LOG_DEBUG);
-    
+    task_events = xEventGroupCreate();
     Hardware_init();
 
     TaskHandle_t lvgl_stack_handle = NULL;
+    TaskHandle_t wifi_task_handle = NULL;
+    TaskHandle_t weather_task_handle = NULL;
+    TaskHandle_t periodic_sync_task_handle = NULL;
     xTaskCreatePinnedToCore(lvgl_event_task, "lvgl_event_task", 6144, NULL, 5, &lvgl_stack_handle, 1);
-    // 启动 Wi-Fi 任务（优先级高于HTTP任务）
-    xTaskCreatePinnedToCore(wifi_task, "wifi_task", 4096, NULL, 4, NULL,0);
-    xTaskCreatePinnedToCore(weather_task,"weather_task",4096,NULL,3,NULL,0);
+    xTaskCreatePinnedToCore(wifi_task, "wifi_task", 4096, NULL, 4, &wifi_task_handle, 0);
+    xTaskCreatePinnedToCore(weather_task,"weather_task",4096,NULL,3,&weather_task_handle,0);
 
-    BaseType_t result = xTaskCreatePinnedToCore(periodic_sync_task, "periodic_sync", 2048, NULL, 4, NULL,0);
-    if (result != pdPASS) {
-        ESP_LOGE("main", "任务创建失败，错误码：%d", result);
-    }
+    xTaskCreatePinnedToCore(periodic_sync_task, "periodic_sync", 2048, NULL, 4, &periodic_sync_task_handle,0);
+
     // 创建低优先级监控任务
     // xTaskCreatePinnedToCore(stack_monitor, "stack_mon", 2048, &lvgl_stack_handle, 1, NULL,0);
+    // xTaskCreatePinnedToCore(stack_monitor, "stack_mon", 2048, &wifi_task_handle, 1, NULL,0);
   
     // 6. 主循环
     for(;;) {
@@ -90,10 +102,3 @@ void app_main(void)
     }
 }
 
-
-
-/*低功耗任务*/
-/* void enter_sleep_mode() {
-    hardware_set_brightness(10); // 降低亮度
-    vTaskDelay(pdMS_TO_TICKS(100)); // 10 FPS
-} */

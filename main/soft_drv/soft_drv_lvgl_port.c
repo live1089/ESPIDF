@@ -9,7 +9,7 @@
 #include "Digital_key.h"
 #include "lv_ui.h"
 #include "event_bits.h"
-
+#include "esp_timer.h"
 static const char *TAG = "LVGL_INTT";
 
 #define LCD_DRAW_BUFF_HEIGHT (40)     // 绘图缓冲区高度（行数）
@@ -32,7 +32,7 @@ void soft_drv_lvgl_port_init(void)
         .task_stack = 8 * 1024,        // 任务栈大小（8KB）
         .task_affinity = -1,         // 不绑定到特定 CPU 核心
         .task_max_sleep_ms = 500,    // 任务最大休眠时间（500ms）
-        .timer_period_ms = 5         // LVGL 定时器周期（5ms）
+        .timer_period_ms = 10         // LVGL 定时器周期（10ms）
     };
     ESP_ERROR_CHECK(lvgl_port_init(&lvgl_cfg));
 
@@ -91,7 +91,9 @@ void lvgl_event_task(void *param)
     while (1)
     {
         lvgl_port_lock(0);
-        lv_task_handler(); // 处理 LVGL 事件
+        // uint32_t start = esp_timer_get_time();
+        lv_task_handler();
+        // ESP_LOGI("LVGL", "渲染时间: %lld us", esp_timer_get_time() - start);
         lvgl_port_unlock();
         vTaskDelay(pdMS_TO_TICKS(10)); 
     }

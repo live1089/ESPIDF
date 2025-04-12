@@ -106,7 +106,7 @@ esp_err_t hardware_set_brightness(uint16_t brightness_percent) {
     }
 
     ESP_LOGI(TAG, "Setting LCD backlight: %d%%", brightness_percent);
-    uint32_t duty_cycle = (1023 * brightness_percent) / 100;  // 将百分比转换为占空比
+    uint32_t duty_cycle = 1023 - (1023 * brightness_percent) / 100;  // 将百分比转换为占空比
     ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LCD_LEDC_CH, duty_cycle));
     ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LCD_LEDC_CH));
 

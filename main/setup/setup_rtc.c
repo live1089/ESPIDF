@@ -5,15 +5,19 @@ static const char *TAG = "RTC";
 RTC_DATA_ATTR static time_t rtc_time;
 
 /* 系统运行时间 */
-void sys_run_time()
-{
-    int64_t sec = esp_timer_get_time();
-    time_t times = sec / 1000000;
-    struct tm *time_info;
-    time_info = localtime (&times);
-    char formatted_time[30];
-    strftime(formatted_time, sizeof(formatted_time), "%Y-%m-%d %H:%M:%S", time_info);
-    ESP_LOGI(TAG,"系统运行时间：%s",formatted_time);
+#include <stdio.h>
+
+char* sys_run_time() {
+    uint64_t up_time = esp_timer_get_time();  // 获取系统运行时间，单位为微秒
+    uint64_t up_time_seconds = up_time / 1000000;  // 转换为秒
+
+    static char time_str[64];
+    uint64_t hours = up_time_seconds / 3600;
+    uint64_t minutes = (up_time_seconds % 3600) / 60;
+    uint64_t seconds = up_time_seconds % 60;
+
+    sprintf(time_str, "系统运行时间：%02llu小时%02llu分钟%02llu秒", hours, minutes, seconds);
+    return time_str;  // 返回格式化的时间字符串
 }
 
 /* 获取当前系统时间并保存 */
@@ -31,44 +35,45 @@ void recover_time_from_rtc()
     settimeofday(&tv, NULL); // 恢复系统时间
 }
 
-/* 初始化SNTP服务获取时间 */
+/* 初始化SNTP服务 */
 void sntp_init_get_time(void)
 {
-    ESP_LOGI(TAG,"进入SNTP初始化，获取时间");
+    ESP_LOGI(TAG,"进入SNTP初始化");
     esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG("cn.pool.ntp.org");
-    esp_netif_sntp_init(&config);
-    if (esp_netif_sntp_sync_wait(pdMS_TO_TICKS(10000)) != ESP_OK)
-    {
-        ESP_LOGE(TAG, "无法在 10 秒超时内更新系统时间。");
-    }else{
-        ESP_LOGI(TAG,"SNTP时间获取成功");
+    config.wait_for_sync = false; 
+    config.start = false;
+    esp_err_t err = esp_netif_sntp_init(&config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "初始化简单网络时间协议（SNTP）失败 (%s)", esp_err_to_name(err));
+        return;
     }
 }
 
-bool sntp_connection = false;
+
 /* 验证是否同步成功 */
 bool sync_time_ntp()
 {
     time_t now = 0;
-    int retry = 0;
+    uint8_t retry = 0;
+    // static uint8_t sync_count = 0;
+    static bool is_first_sync = true; 
     const int max_retries = 15;
-
+    time_t saved_time =  load_time_from_nvs();
     while (retry < max_retries)
     {
         now = time(NULL); // 获取当前时间
-        if (now > 1000000000)
-        { // 检查时间是否已经设置
-            ESP_LOGI(TAG, "时间已成功同步，当前时间戳: %u", (unsigned int)now);
-            save_time_to_nvs(now); // 将时间保存到NVS
-            esp_netif_sntp_deinit();
-            sntp_connection = true;
-            return true;
-        }
-        else
+        if (is_first_sync && now > 1680000000)
         {
-            ESP_LOGI(TAG, "时间尚未设置，正在等待...");
+            ESP_LOGI(TAG, "时间已成功同步，当前时间戳: %lld", (long long)now);
+            is_first_sync = false;
+            return true;
+        }else if (saved_time < now) {
+            ESP_LOGI(TAG, "时间已成功同步，当前时间戳: %lld\n上次时间戳: %lld", (long long)now,(long long)saved_time);
+            return true;
+        } else{
+            ESP_LOGE(TAG, "时间同步失败");
             vTaskDelay(2000 / portTICK_PERIOD_MS); // 等待2秒
-            sntp_init_get_time();
+            sntp_sync_time(NULL);
         }
         retry++;
     }
@@ -151,12 +156,15 @@ static void print_servers(void)
     }
 }
 
+void set_time_zone()
+{
+    setenv("TZ", "CST-8", 1);
+    tzset();
+}
 /* 时间戳转换为本地时间 */
 void convert_to_datetime(time_t timestamp, DateTime *dt)
 {
     struct tm timeinfo;
-    setenv("TZ", "CST-8", 1);
-    tzset();
     localtime_r(&timestamp, &timeinfo);
     dt->year = timeinfo.tm_year + 1900;
     dt->month = timeinfo.tm_mon + 1;
@@ -172,40 +180,60 @@ DateTime current_time = {0};
 /* 时间同步任务 */
 void periodic_sync_task(void *pvParams)
 {
-    ESP_LOGI(TAG, "进入时间同步任务");
+    ESP_LOGI(TAG, "等待Wi-Fi连接成功...");
     if (net_events == NULL)
     {
         ESP_LOGE(TAG, "事件组未初始化");
         vTaskDelete(NULL);
         return;
     }
-    // 等待Wi-Fi连接成功
-    xEventGroupWaitBits(net_events, Notice_nvs,
-                        pdFALSE, pdTRUE, portMAX_DELAY);
+    EventBits_t bits = xEventGroupWaitBits(net_events, 
+        SYS_EVENT_WIFI_READY | WIFI_STOP,
+        pdTRUE, pdFALSE, portMAX_DELAY
+    );
 
-    sntp_init_get_time();
-    if (sync_time_ntp())
+    if (bits & SYS_EVENT_WIFI_READY)
     {
-       
-        convert_to_datetime(time(NULL), &current_time);
-        ESP_LOGI(TAG,"当前时间：%d/%02d/%02d %d:%02d:%02d",current_time.year,current_time.month,
-                                                        current_time.day,current_time.hour,
-                                                        current_time.minute,current_time.second);
+        ESP_LOGI(TAG,"启动SNTP服务");
+        esp_netif_sntp_start();
+        set_time_zone();
     }
     
+    if (bits & WIFI_STOP)
+    {
+        ESP_LOGI(TAG,"停止SNTP服务");
+        esp_sntp_stop();
+    }
     
     while (1)
     {
-        vTaskDelay(3600 * 1000 / portTICK_PERIOD_MS); // 每小时同步一次
-        sntp_connection = false;
-        if (wifi_connected())
+        if (sync_time_ntp())
         {
-            if (sync_time_ntp())
-            {
-                convert_to_datetime(time(NULL), &current_time);
-                ESP_LOGI(TAG, " 每小时时间同步成功");
-                
+            time_t now = time(NULL);
+            if (now == (time_t)-1) {
+                ESP_LOGE("RTC","time_t错误");
+                return;
             }
+            save_time_to_nvs(time(NULL));
+        
+            struct tm timeinfo;
+            localtime_r(&now, &timeinfo);
+            convert_to_datetime(time(NULL), &current_time);
+            ESP_LOGI(TAG,"当前时间：%d/%02d/%02d %d:%02d:%02d",current_time.year,current_time.month,
+                                                            current_time.day,current_time.hour,
+                                                            current_time.minute,current_time.second);
         }
+        vTaskDelay(3600 * 1000 / portTICK_PERIOD_MS); // 每小时同步一次
     }
 }
+
+
+
+void rtc_release_resources()
+{
+    esp_sntp_stop();
+    esp_netif_sntp_deinit();
+}
+
+
+

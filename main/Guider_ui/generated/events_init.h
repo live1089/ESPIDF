@@ -17,8 +17,10 @@ extern "C" {
 #include "gui_guider.h"
 
 extern bool sec;
+void Brightness_update(lv_timer_t *time);
 
-
+extern bool screen_5_slider_timer_enabled;
+extern lv_timer_t * timer;
 void events_init(lv_ui *ui);
 
 void events_init_screen(lv_ui *ui);
