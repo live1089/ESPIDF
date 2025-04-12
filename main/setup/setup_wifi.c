@@ -49,7 +49,7 @@ static void wifi_event_handle(void *event_handler_arg, esp_event_base_t event_ba
             break;
 
         case WIFI_EVENT_STA_DISCONNECTED:
-        {
+        
             ESP_LOGI(TAG, "WiFi 连接丢失");
             wifi_event_sta_disconnected_t *disconnect =
                 (wifi_event_sta_disconnected_t *)event_data;
@@ -65,25 +65,9 @@ static void wifi_event_handle(void *event_handler_arg, esp_event_base_t event_ba
             {
                 ESP_LOGE(TAG, "身份验证失败，请检查密码。");
             }
-
-            if (s_retry_num < WIFI_MAXIMUM_RETRY)
-            {
-                // 指数退避策略：重试间隔逐步增加（2^retry_num秒）
-                uint32_t delay_ms = (1 << s_retry_num) * 1000;
-                ESP_LOGI(TAG, "在 %d 秒后重试....", (int)(delay_ms / 1000));
-                vTaskDelay(pdMS_TO_TICKS(delay_ms));
-
-                esp_wifi_connect();
-                s_retry_num++;
-            }
-            else
-            {
-                xEventGroupSetBits(net_events, WIFI_FAIL_BIT);
-                ESP_LOGE(TAG, "已达到最大重试次数");
-                // esp_restart(); // 达到最大重试后重启设备
-            }
+            xEventGroupSetBits(net_events, WIFI_FAIL_BIT);
             break;
-        }
+        
         }
     }
     else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
@@ -219,14 +203,31 @@ void wifi_task(void *pvParams)
         // 连接失败
         if (bits & WIFI_FAIL_BIT)
         {
-            ESP_LOGW(TAG, "等待 5 分钟后再试一次...");
-            vTaskDelay(5000000 / portTICK_PERIOD_MS);  // 等待 5 分钟
-            esp_wifi_connect();
+            if (s_retry_num < WIFI_MAXIMUM_RETRY)
+            {
+                // 指数退避策略：重试间隔逐步增加（2^retry_num秒）
+                uint32_t delay_ms = (5 << s_retry_num) * 1000;
+                ESP_LOGI(TAG, "在 %d 秒后重试....", (int)(delay_ms / 1000));
+                vTaskDelay(pdMS_TO_TICKS(delay_ms));
+
+                esp_wifi_connect();
+                s_retry_num++;
+            }
+            else
+            {
+                
+                ESP_LOGE(TAG, "已达到最大重试次数");
+                ESP_LOGW(TAG, "等待 5 分钟后再试一次...");
+                vTaskDelay(5000000 / portTICK_PERIOD_MS);  // 等待 5 分钟
+                esp_wifi_connect();
+                // esp_restart(); // 达到最大重试后重启设备
+            }
         }
 
         if (bits & WIFI_STOP)
         {
             ESP_LOGW(TAG, "停止WIFI模块");
+            esp_wifi_disconnect();
             ESP_ERROR_CHECK(esp_wifi_stop());
         }
 

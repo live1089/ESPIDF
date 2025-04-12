@@ -1,5 +1,7 @@
 #include "setup_rtc.h"
 #include "esp_pm.h"
+#include "esp_task_wdt.h"
+#include "driver/periph_ctrl.h"
 
 static const char *TAG = "RTC";
 RTC_DATA_ATTR static time_t rtc_time;
@@ -7,9 +9,10 @@ RTC_DATA_ATTR static time_t rtc_time;
 /* 系统运行时间 */
 #include <stdio.h>
 
-char* sys_run_time() {
-    uint64_t up_time = esp_timer_get_time();  // 获取系统运行时间，单位为微秒
-    uint64_t up_time_seconds = up_time / 1000000;  // 转换为秒
+char *sys_run_time()
+{
+    uint64_t up_time = esp_timer_get_time();      // 获取系统运行时间，单位为微秒
+    uint64_t up_time_seconds = up_time / 1000000; // 转换为秒
 
     static char time_str[64];
     uint64_t hours = up_time_seconds / 3600;
@@ -17,7 +20,7 @@ char* sys_run_time() {
     uint64_t seconds = up_time_seconds % 60;
 
     sprintf(time_str, "系统运行时间：%02llu小时%02llu分钟%02llu秒", hours, minutes, seconds);
-    return time_str;  // 返回格式化的时间字符串
+    return time_str; // 返回格式化的时间字符串
 }
 
 /* 获取当前系统时间并保存 */
@@ -29,60 +32,58 @@ void save_time_to_rtc()
 /* 深度睡眠/复位后恢复时间 */
 void recover_time_from_rtc()
 {
-/*     if (rtc_time == 0)
+    if (rtc_time == 0)
     {
-        time_t saved_time =  load_time_from_nvs();
-        struct timeval tv = { .tv_sec = saved_time };
+        time_t saved_time = load_time_from_nvs();
+        struct timeval tv = {.tv_sec = saved_time};
         settimeofday(&tv, NULL);
-    }else{
+    }
+    else
+    {
         struct timeval tvg = {
-        .tv_sec = rtc_time,
-        .tv_usec = 0};
-        settimeofday(&tvg, NULL); 
-    } */
-    struct timeval tvg = {
-        .tv_sec = rtc_time,
-        .tv_usec = 0};
-        settimeofday(&tvg, NULL); 
-
+            .tv_sec = rtc_time,
+            .tv_usec = 0};
+        settimeofday(&tvg, NULL);
+    }
+    /*     struct timeval tvg = {
+            .tv_sec = rtc_time,
+            .tv_usec = 0};
+        settimeofday(&tvg, NULL);
+        */
 }
 
 /* 初始化SNTP服务 */
 void sntp_init_get_time(void)
 {
-    ESP_LOGI(TAG,"进入SNTP初始化");
+    ESP_LOGI(TAG, "进入SNTP初始化");
     esp_sntp_config_t config = ESP_NETIF_SNTP_DEFAULT_CONFIG("cn.pool.ntp.org");
-    config.wait_for_sync = false; 
+    config.wait_for_sync = false;
     config.start = false;
     esp_err_t err = esp_netif_sntp_init(&config);
-    if (err != ESP_OK) {
+    if (err != ESP_OK)
+    {
         ESP_LOGE(TAG, "初始化简单网络时间协议（SNTP）失败 (%s)", esp_err_to_name(err));
         return;
     }
 }
-
 
 /* 验证是否同步成功 */
 bool sync_time_ntp()
 {
     time_t now = 0;
     uint8_t retry = 0;
-    // static uint8_t sync_count = 0;
-    static bool is_first_sync = true; 
     const int max_retries = 15;
-    time_t saved_time =  load_time_from_nvs();
+    time_t saved_time = load_time_from_nvs();
     while (retry < max_retries)
     {
         now = time(NULL); // 获取当前时间
-        if (is_first_sync && now > 1680000000)
+        if (now > 1680000000)
         {
             ESP_LOGI(TAG, "时间已成功同步，当前时间戳: %lld", (long long)now);
-            is_first_sync = false;
             return true;
-        }else if (saved_time < now) {
-            ESP_LOGI(TAG, "时间已成功同步，当前时间戳: %lld\n上次时间戳: %lld", (long long)now,(long long)saved_time);
-            return true;
-        } else{
+        }
+        else
+        {
             ESP_LOGE(TAG, "时间同步失败");
             vTaskDelay(2000 / portTICK_PERIOD_MS); // 等待2秒
             sntp_sync_time(NULL);
@@ -118,39 +119,54 @@ time_t get_last_system_su_time()
 /* 关闭系统，进入低功耗状态 */
 void rtc_config_init()
 {
-    rtc_config_t cfg = RTC_CONFIG_DEFAULT();
-    rtc_init(cfg);
-    rtc_clk_config_t config = RTC_CLK_CONFIG_DEFAULT();
-    rtc_clk_slow_src_set(SOC_RTC_SLOW_CLK_SRC_RC_SLOW);
-    rtc_clk_init(config);
+    // uint8_t cs = 5;
+    // while (cs > 0)
+    // {
+    //     if (!wifi_connected())
+    //     {
+            esp_wifi_disconnect();
+            ESP_ERROR_CHECK(esp_wifi_stop());
+            esp_sntp_stop();
+            esp_wifi_deinit();
 
-    esp_wifi_stop();
-    esp_wifi_deinit();
-    esp_netif_deinit();
-    esp_sntp_stop();
-    esp_netif_sntp_deinit();
+            rtc_config_t cfg = RTC_CONFIG_DEFAULT();
+            rtc_init(cfg);
+            rtc_clk_config_t config = RTC_CLK_CONFIG_DEFAULT();
+            rtc_clk_slow_src_set(SOC_RTC_SLOW_CLK_SRC_RC_SLOW);
+            rtc_clk_init(config);
 
-    // 2. 配置GPIO4为RTC唤醒源
-    const gpio_num_t wake_pin = GPIO_NUM_26;
-    rtc_gpio_pullup_en(wake_pin);
-    rtc_gpio_pulldown_dis(wake_pin);
-    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-    esp_err_t err = esp_sleep_enable_ext0_wakeup(wake_pin, 0); // 0 表示低电平唤醒
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to enable ext0 wakeup: %s", esp_err_to_name(err));
-    } else {
-        ESP_LOGI(TAG, "GPIO %d configured for low-level wakeup", wake_pin);
-    }
-    rtc_sleep_config_t sleep_cfg;
-    uint32_t pd_flags = RTC_SLEEP_PD_VDDSDIO |
-                        RTC_SLEEP_PD_MODEM |
-                        RTC_SLEEP_PD_XTAL ;
-    rtc_sleep_get_default_config(pd_flags, &sleep_cfg);
-    sleep_cfg.rtc_fastmem_pd_en = 0; // 保持RTC_FAST内存供电
-    sleep_cfg.rtc_slowmem_pd_en = 0; // 保持RTC_SLOW内存供电
-    rtc_sleep_init(sleep_cfg);
-    save_time_to_rtc();
-    esp_deep_sleep_start();
+            // 2. 配置GPIO4为RTC唤醒源
+            const gpio_num_t wake_pin = GPIO_NUM_26;
+            rtc_gpio_pullup_en(wake_pin);
+            rtc_gpio_pulldown_dis(wake_pin);
+            esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+            esp_err_t err = esp_sleep_enable_ext0_wakeup(wake_pin, 0); // 0 表示低电平唤醒
+            if (err != ESP_OK)
+            {
+                ESP_LOGE(TAG, "Failed to enable ext0 wakeup: %s", esp_err_to_name(err));
+            }
+            else
+            {
+                ESP_LOGI(TAG, "GPIO %d configured for low-level wakeup", wake_pin);
+            }
+            rtc_sleep_config_t sleep_cfg;
+            uint32_t pd_flags = RTC_SLEEP_PD_VDDSDIO |
+                                RTC_SLEEP_PD_MODEM |
+                                RTC_SLEEP_PD_XTAL;
+            rtc_sleep_get_default_config(pd_flags, &sleep_cfg);
+            sleep_cfg.rtc_fastmem_pd_en = 0; // 保持RTC_FAST内存供电
+            sleep_cfg.rtc_slowmem_pd_en = 0; // 保持RTC_SLOW内存供电
+            rtc_sleep_init(sleep_cfg);
+            save_time_to_rtc();
+
+            esp_netif_sntp_deinit();
+            esp_netif_deinit();
+            periph_module_disable(PERIPH_WIFI_MODULE);
+            periph_module_reset(PERIPH_WIFI_MODULE);
+
+            esp_deep_sleep_start();
+    //     }
+    // }
 }
 
 /* 打印已配置的 NTP 服务器列表 */
@@ -206,52 +222,47 @@ void periodic_sync_task(void *pvParams)
         vTaskDelete(NULL);
         return;
     }
-    EventBits_t bits = xEventGroupWaitBits(net_events, 
-        SYS_EVENT_WIFI_READY | WIFI_STOP,
-        pdTRUE, pdFALSE, portMAX_DELAY
-    );
+    EventBits_t bits = xEventGroupWaitBits(net_events,
+                                           SYS_EVENT_WIFI_READY | WIFI_STOP,
+                                           pdTRUE, pdFALSE, portMAX_DELAY);
 
     if (bits & SYS_EVENT_WIFI_READY)
     {
-        ESP_LOGI(TAG,"启动SNTP服务");
+        ESP_LOGI(TAG, "启动SNTP服务");
         esp_netif_sntp_start();
         set_time_zone();
         save_time_to_nvs(time(NULL));
     }
-    
+
     if (bits & WIFI_STOP)
     {
-        ESP_LOGI(TAG,"停止SNTP服务");
+        ESP_LOGI(TAG, "停止SNTP服务");
         esp_sntp_stop();
     }
-    
+
     while (1)
     {
         if (sync_time_ntp())
         {
             time_t now = time(NULL);
-            if (now == (time_t)-1) {
-                ESP_LOGE("RTC","time_t错误");
+            if (now == (time_t)-1)
+            {
+                ESP_LOGE("RTC", "time_t错误");
                 return;
             }
             struct tm timeinfo;
             localtime_r(&now, &timeinfo);
             convert_to_datetime(time(NULL), &current_time);
-            ESP_LOGI(TAG,"当前时间：%d/%02d/%02d %d:%02d:%02d",current_time.year,current_time.month,
-                                                            current_time.day,current_time.hour,
-                                                            current_time.minute,current_time.second);
+            ESP_LOGI(TAG, "当前时间：%d/%02d/%02d %d:%02d:%02d", current_time.year, current_time.month,
+                     current_time.day, current_time.hour,
+                     current_time.minute, current_time.second);
         }
         vTaskDelay(3600 * 1000 / portTICK_PERIOD_MS); // 每小时同步一次
     }
 }
-
-
 
 void rtc_release_resources()
 {
     esp_sntp_stop();
     esp_netif_sntp_deinit();
 }
-
-
-
