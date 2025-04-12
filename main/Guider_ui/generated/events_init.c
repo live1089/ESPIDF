@@ -239,7 +239,7 @@ static void screen_3_btn_2_event_handler (lv_event_t *e)
     switch (code) {
     case LV_EVENT_PRESSED:
     {
-
+        rtc_config_init();
         break;
     }
     default:

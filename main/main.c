@@ -23,7 +23,7 @@
 #include "event_bits.h"
 #include "setup_nvs.h"
 lv_ui guider_ui; 
-// static const char *TAG = "main";
+static const char *TAG = "main";
 EventGroupHandle_t task_events;
 /*
 1. 任务分配原则
@@ -90,12 +90,18 @@ void app_main(void)
     xTaskCreatePinnedToCore(wifi_task, "wifi_task", 4096, NULL, 4, &wifi_task_handle, 0);
     xTaskCreatePinnedToCore(weather_task,"weather_task",4096,NULL,3,&weather_task_handle,0);
 
-    xTaskCreatePinnedToCore(periodic_sync_task, "periodic_sync", 2048, NULL, 4, &periodic_sync_task_handle,0);
+    xTaskCreatePinnedToCore(periodic_sync_task, "periodic_sync", 4096, NULL, 4, &periodic_sync_task_handle,0);
 
     // 创建低优先级监控任务
     // xTaskCreatePinnedToCore(stack_monitor, "stack_mon", 2048, &lvgl_stack_handle, 1, NULL,0);
     // xTaskCreatePinnedToCore(stack_monitor, "stack_mon", 2048, &wifi_task_handle, 1, NULL,0);
   
+    uint64_t wakeup_reason = esp_sleep_get_wakeup_cause();
+    if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT0) {
+        ESP_LOGI(TAG, "由 GPIO 26 引起的唤醒");
+    } else {
+        ESP_LOGI(TAG, "由其他来源引起的唤醒。: %llu", wakeup_reason);
+    }
     // 6. 主循环
     for(;;) {
         vTaskDelay(pdMS_TO_TICKS(1000));

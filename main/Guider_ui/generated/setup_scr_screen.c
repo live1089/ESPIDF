@@ -210,7 +210,7 @@ void setup_scr_screen(lv_ui *ui)
     lv_obj_set_size(ui->screen_datetext_1, 130, 36);
     lv_label_set_text(ui->screen_datetext_1, "----/--/--");
     lv_obj_set_style_text_align(ui->screen_datetext_1, LV_TEXT_ALIGN_CENTER, 0);
-
+   
     //Write style for screen_datetext_1, Part: LV_PART_MAIN, State: LV_STATE_DEFAULT.
     lv_obj_set_style_text_color(ui->screen_datetext_1, lv_color_hex(0xffffff), LV_PART_MAIN|LV_STATE_DEFAULT);
     lv_obj_set_style_text_font(ui->screen_datetext_1, &lv_font_HYCuHeiJ_16, LV_PART_MAIN|LV_STATE_DEFAULT);
@@ -256,7 +256,6 @@ void setup_scr_screen(lv_ui *ui)
     lv_obj_set_style_shadow_width(ui->screen_digital_clock_1, 0, LV_PART_MAIN|LV_STATE_DEFAULT);
 
     //The custom code of screen.
-
 
     //Update current screen layout.
     lvgl_port_lock(0);

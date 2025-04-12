@@ -29,10 +29,22 @@ void save_time_to_rtc()
 /* 深度睡眠/复位后恢复时间 */
 void recover_time_from_rtc()
 {
-    struct timeval tv = {
+/*     if (rtc_time == 0)
+    {
+        time_t saved_time =  load_time_from_nvs();
+        struct timeval tv = { .tv_sec = saved_time };
+        settimeofday(&tv, NULL);
+    }else{
+        struct timeval tvg = {
         .tv_sec = rtc_time,
         .tv_usec = 0};
-    settimeofday(&tv, NULL); // 恢复系统时间
+        settimeofday(&tvg, NULL); 
+    } */
+    struct timeval tvg = {
+        .tv_sec = rtc_time,
+        .tv_usec = 0};
+        settimeofday(&tvg, NULL); 
+
 }
 
 /* 初始化SNTP服务 */
@@ -113,19 +125,26 @@ void rtc_config_init()
     rtc_clk_init(config);
 
     esp_wifi_stop();
-    // esp_bt_controller_disable();关闭蓝牙
+    esp_wifi_deinit();
+    esp_netif_deinit();
+    esp_sntp_stop();
+    esp_netif_sntp_deinit();
 
     // 2. 配置GPIO4为RTC唤醒源
     const gpio_num_t wake_pin = GPIO_NUM_26;
-    rtc_gpio_pullup_dis(wake_pin);
-    rtc_gpio_pulldown_en(wake_pin);
-    esp_sleep_enable_ext0_wakeup(wake_pin, 0); // 低电平唤醒
-
+    rtc_gpio_pullup_en(wake_pin);
+    rtc_gpio_pulldown_dis(wake_pin);
+    esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+    esp_err_t err = esp_sleep_enable_ext0_wakeup(wake_pin, 0); // 0 表示低电平唤醒
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to enable ext0 wakeup: %s", esp_err_to_name(err));
+    } else {
+        ESP_LOGI(TAG, "GPIO %d configured for low-level wakeup", wake_pin);
+    }
     rtc_sleep_config_t sleep_cfg;
     uint32_t pd_flags = RTC_SLEEP_PD_VDDSDIO |
                         RTC_SLEEP_PD_MODEM |
-                        RTC_SLEEP_PD_XTAL |
-                        RTC_SLEEP_PD_INT_8M;
+                        RTC_SLEEP_PD_XTAL ;
     rtc_sleep_get_default_config(pd_flags, &sleep_cfg);
     sleep_cfg.rtc_fastmem_pd_en = 0; // 保持RTC_FAST内存供电
     sleep_cfg.rtc_slowmem_pd_en = 0; // 保持RTC_SLOW内存供电
@@ -197,6 +216,7 @@ void periodic_sync_task(void *pvParams)
         ESP_LOGI(TAG,"启动SNTP服务");
         esp_netif_sntp_start();
         set_time_zone();
+        save_time_to_nvs(time(NULL));
     }
     
     if (bits & WIFI_STOP)
@@ -214,8 +234,6 @@ void periodic_sync_task(void *pvParams)
                 ESP_LOGE("RTC","time_t错误");
                 return;
             }
-            save_time_to_nvs(time(NULL));
-        
             struct tm timeinfo;
             localtime_r(&now, &timeinfo);
             convert_to_datetime(time(NULL), &current_time);

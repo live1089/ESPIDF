@@ -41,4 +41,7 @@ char* sys_run_time();
 void convert_to_datetime(time_t timestamp, DateTime *dt);
 void rtc_release_resources();
 void sntp_init_get_time(void);
+void recover_time_from_rtc();
+void save_time_to_rtc();
+void rtc_config_init();
 #endif
